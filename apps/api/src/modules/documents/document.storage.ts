@@ -57,6 +57,7 @@ export class DocumentStorage {
   async receive(req: Request, res: Response): Promise<{ key: string; originalName: string; mimeType: DocumentDTO['mimeType']; sizeBytes: number }> {
     if (!req.is('multipart/form-data')) throw invalidUpload();
     await this.prepare();
+    console.log('[DocumentStorage.receive] prepare succeeded, root:', this.root);
     const temporaryKey = `${randomUUID()}.upload`;
     const options = {
       defParamCharset: 'utf8',
@@ -67,23 +68,30 @@ export class DocumentStorage {
     try {
       await new Promise<void>((resolve, reject) => parser(req, res, (error: unknown) => error ? reject(error) : resolve()));
       const file = req.file;
+      console.log('[DocumentStorage.receive] multer parsed file:', file ? { originalname: file.originalname, size: file.size, mimetype: file.mimetype } : 'NO FILE');
       if (!file || file.size === 0) throw invalidUpload();
       if (file.size > salarySlipMaxBytes) throw new multer.MulterError('LIMIT_FILE_SIZE');
       let detected;
       try { detected = await fileTypeFromFile(this.path(temporaryKey)); }
       catch (error) {
+        console.error('[DocumentStorage.receive] fileTypeFromFile failed:', error);
         if (error instanceof Error && 'code' in error) throw documentUnavailable();
         throw unsupported();
       }
+      console.log('[DocumentStorage.receive] detected type:', detected);
       const mimeType = detected?.mime as DocumentDTO['mimeType'] | undefined;
       const extensions = mimeType && salarySlipExtensions[mimeType];
       const extension = posix.extname(win32.basename(file.originalname)).toLowerCase();
       if (!mimeType || !extensions || file.mimetype !== mimeType || !extensions.includes(extension)) throw unsupported();
       const key = `${randomUUID()}${extensions[0]}`;
       try { await rename(this.path(temporaryKey), this.path(key)); }
-      catch { throw documentUnavailable(); }
+      catch (error) {
+        console.error('[DocumentStorage.receive] rename failed:', error);
+        throw documentUnavailable();
+      }
       return { key, originalName: safeOriginalName(file.originalname), mimeType, sizeBytes: file.size };
     } catch (error) {
+      console.error('[DocumentStorage.receive] outer catch:', error);
       if (error instanceof HttpError) throw error;
       if (error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE') {
         throw new HttpError(413, 'FILE_TOO_LARGE', 'The maximum file size is 5,000,000 bytes.');

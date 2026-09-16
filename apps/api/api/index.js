@@ -158441,6 +158441,7 @@ var DocumentStorage = class {
   async receive(req, res) {
     if (!req.is("multipart/form-data")) throw invalidUpload();
     await this.prepare();
+    console.log("[DocumentStorage.receive] prepare succeeded, root:", this.root);
     const temporaryKey = `${randomUUID()}.upload`;
     const options = {
       defParamCharset: "utf8",
@@ -158451,15 +158452,18 @@ var DocumentStorage = class {
     try {
       await new Promise((resolve2, reject) => parser(req, res, (error62) => error62 ? reject(error62) : resolve2()));
       const file2 = req.file;
+      console.log("[DocumentStorage.receive] multer parsed file:", file2 ? { originalname: file2.originalname, size: file2.size, mimetype: file2.mimetype } : "NO FILE");
       if (!file2 || file2.size === 0) throw invalidUpload();
       if (file2.size > salarySlipMaxBytes) throw new import_multer.default.MulterError("LIMIT_FILE_SIZE");
       let detected;
       try {
         detected = await fileTypeFromFile(this.path(temporaryKey));
       } catch (error62) {
+        console.error("[DocumentStorage.receive] fileTypeFromFile failed:", error62);
         if (error62 instanceof Error && "code" in error62) throw documentUnavailable();
         throw unsupported();
       }
+      console.log("[DocumentStorage.receive] detected type:", detected);
       const mimeType = detected?.mime;
       const extensions2 = mimeType && salarySlipExtensions[mimeType];
       const extension = posix.extname(win32.basename(file2.originalname)).toLowerCase();
@@ -158467,11 +158471,13 @@ var DocumentStorage = class {
       const key = `${randomUUID()}${extensions2[0]}`;
       try {
         await rename(this.path(temporaryKey), this.path(key));
-      } catch {
+      } catch (error62) {
+        console.error("[DocumentStorage.receive] rename failed:", error62);
         throw documentUnavailable();
       }
       return { key, originalName: safeOriginalName(file2.originalname), mimeType, sizeBytes: file2.size };
     } catch (error62) {
+      console.error("[DocumentStorage.receive] outer catch:", error62);
       if (error62 instanceof HttpError) throw error62;
       if (error62 instanceof import_multer.default.MulterError && error62.code === "LIMIT_FILE_SIZE") {
         throw new HttpError(413, "FILE_TOO_LARGE", "The maximum file size is 5,000,000 bytes.");
