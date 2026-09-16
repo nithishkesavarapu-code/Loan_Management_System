@@ -39,12 +39,27 @@ export default async function handler(req, res) {
       }
     }
 
-    appInstance(req, res);
+    return await new Promise((resolve, reject) => {
+      res.on('finish', resolve);
+      res.on('close', resolve);
+      res.on('error', reject);
+      appInstance(req, res, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
   } catch (error) {
     console.error('Vercel API Serverless Handler initialization error:', error);
-    res.statusCode = 503;
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.setHeader('Cache-Control', 'no-store');
-    res.end(JSON.stringify({ error: { code: 'DEPENDENCY_UNAVAILABLE', message: 'The database is not ready.' } }));
+    if (!res.headersSent) {
+      res.statusCode = 503;
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-store');
+      res.end(JSON.stringify({
+        error: {
+          code: 'DEPENDENCY_UNAVAILABLE',
+          message: error instanceof Error ? error.message : 'The database or environment is not ready.'
+        }
+      }));
+    }
   }
 }
