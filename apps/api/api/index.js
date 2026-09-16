@@ -158420,12 +158420,14 @@ var DocumentStorage = class {
   async prepare() {
     try {
       await mkdir(this.root, { recursive: true, mode: 448 });
-      const actual = await realpath(this.root);
       if (!isVercel) {
+        const actual = await realpath(this.root);
         uploadDirectory(actual);
         if (relative(this.root, actual) !== "") throw documentUnavailable();
       }
-    } catch {
+    } catch (error62) {
+      console.error("[DocumentStorage.prepare] failed:", { root: this.root, isVercel, error: error62 });
+      if (error62 instanceof HttpError) throw error62;
       throw documentUnavailable();
     }
   }

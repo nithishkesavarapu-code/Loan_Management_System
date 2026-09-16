@@ -39,13 +39,16 @@ export class DocumentStorage {
   async prepare(): Promise<void> {
     try {
       await mkdir(this.root, { recursive: true, mode: 0o700 });
-      const actual = await realpath(this.root);
-      // On Vercel, /tmp may resolve via symlinks — only validate on local
       if (!isVercel) {
+        const actual = await realpath(this.root);
         uploadDirectory(actual);
         if (relative(this.root, actual) !== '') throw documentUnavailable();
       }
-    } catch { throw documentUnavailable(); }
+    } catch (error) {
+      console.error('[DocumentStorage.prepare] failed:', { root: this.root, isVercel, error });
+      if (error instanceof HttpError) throw error;
+      throw documentUnavailable();
+    }
   }
   async remove(key: string): Promise<void> {
     try { await unlink(this.path(key)); }
