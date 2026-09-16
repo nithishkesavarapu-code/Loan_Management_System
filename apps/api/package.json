@@ -1,0 +1,35 @@
+{
+  "name": "@lms/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --env-file=../../.env --import tsx --watch src/local-server.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node --env-file=../../.env dist/local-server.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src tests",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "test:integration": "node --env-file=../../.env --import tsx --test tests/integration/*.test.ts",
+    "seed": "node --env-file=../../.env --import tsx src/scripts/seed.ts",
+    "db:check": "node --env-file=../../.env --import tsx src/scripts/check-database.ts"
+  },
+  "dependencies": {
+    "@lms/shared": "0.1.0",
+    "bcrypt": "6.0.0",
+    "cookie-parser": "1.4.7",
+    "express": "5.2.1",
+    "file-type": "22.1.0",
+    "helmet": "8.3.0",
+    "jose": "6.2.12",
+    "mongoose": "9.10.1",
+    "multer": "2.4.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "6.0.0",
+    "@types/cookie-parser": "1.4.10",
+    "@types/express": "5.0.6",
+    "@types/multer": "2.2.0"
+  }
+}

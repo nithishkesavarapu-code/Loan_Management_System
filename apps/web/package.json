@@ -1,0 +1,28 @@
+{
+  "name": "@lms/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --import ../../scripts/load-env.mjs ../../node_modules/next/dist/bin/next dev --hostname 127.0.0.1",
+    "build": "next build",
+    "start": "node --import ../../scripts/load-env.mjs ../../node_modules/next/dist/bin/next start --hostname 127.0.0.1",
+    "typecheck": "next typegen && tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@lms/shared": "0.1.0",
+    "lucide-react": "1.46.0",
+    "next": "16.3.5",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "server-only": "0.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint-config-next": "16.3.5",
+    "tailwindcss": "4.3.3"
+  }
+}

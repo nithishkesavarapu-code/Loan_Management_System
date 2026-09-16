@@ -1,0 +1,53 @@
+{
+  "name": "loan-management-system",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10"
+  },
+  "workspaces": [
+    "packages/shared",
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "setup": "node scripts/setup-env.mjs",
+    "db:check": "npm run db:check --workspace @lms/api",
+    "preseed": "npm run build --workspace @lms/shared",
+    "seed": "npm run seed --workspace @lms/api",
+    "predev": "npm run build --workspace @lms/shared",
+    "dev": "concurrently --kill-others --names shared,api,web \"npm:dev:shared\" \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:shared": "npm run dev --workspace @lms/shared",
+    "dev:api": "npm run dev --workspace @lms/api",
+    "dev:web": "npm run dev --workspace @lms/web",
+    "build": "npm run build --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "lint": "eslint scripts tests playwright.config.ts && npm run lint --workspaces",
+    "test": "npm run test --workspaces --if-present",
+    "test:browser": "playwright test",
+    "test:integration": "npm run test:integration --workspace @lms/api",
+    "start": "concurrently --kill-others --names api,web \"npm:start:api\" \"npm:start:web\"",
+    "start:api": "npm run start --workspace @lms/api",
+    "start:web": "npm run start --workspace @lms/web"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "@playwright/test": "1.63.0",
+    "@types/node": "24.13.4",
+    "@types/supertest": "7.2.1",
+    "concurrently": "10.0.5",
+    "eslint": "9.39.5",
+    "globals": "17.12.0",
+    "supertest": "7.2.2",
+    "tsx": "4.23.13",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.70.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "unrs-resolver@1.12.2": true,
+    "bcrypt@6.0.0": true
+  }
+}
