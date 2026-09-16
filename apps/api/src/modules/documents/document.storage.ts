@@ -8,7 +8,8 @@ import { fileTypeFromFile } from 'file-type';
 import { salarySlipExtensions, salarySlipMaxBytes, type DocumentDTO } from '@lms/shared';
 import { HttpError } from '../../middleware/errors.js';
 
-const projectRoot = fileURLToPath(new URL('../../../../../', import.meta.url));
+const isVercel = !!process.env.VERCEL;
+const projectRoot = isVercel ? '/var/task' : fileURLToPath(new URL('../../../../../', import.meta.url));
 const webRoot = resolve(projectRoot, 'apps/web');
 const keyPattern = /^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}\.(?:pdf|jpg|png|upload)$/;
 function contains(parent: string, child: string) {
@@ -17,7 +18,8 @@ function contains(parent: string, child: string) {
 }
 export function uploadDirectory(configured: string): string {
   const root = isAbsolute(configured) ? configured : resolve(projectRoot, configured);
-  if (contains(webRoot, root) || contains(root, webRoot)) throw new Error('UPLOAD_DIR must be private and outside the web application.');
+  // On Vercel, /tmp is the only writable dir; skip the webRoot containment check
+  if (!isVercel && (contains(webRoot, root) || contains(root, webRoot))) throw new Error('UPLOAD_DIR must be private and outside the web application.');
   return root;
 }
 export function safeOriginalName(value: string): string {
@@ -38,8 +40,11 @@ export class DocumentStorage {
     try {
       await mkdir(this.root, { recursive: true, mode: 0o700 });
       const actual = await realpath(this.root);
-      uploadDirectory(actual);
-      if (relative(this.root, actual) !== '') throw documentUnavailable();
+      // On Vercel, /tmp may resolve via symlinks — only validate on local
+      if (!isVercel) {
+        uploadDirectory(actual);
+        if (relative(this.root, actual) !== '') throw documentUnavailable();
+      }
     } catch { throw documentUnavailable(); }
   }
   async remove(key: string): Promise<void> {

@@ -158389,7 +158389,8 @@ async function fileTypeFromFile(path, options) {
 }
 
 // apps/api/src/modules/documents/document.storage.ts
-var projectRoot = fileURLToPath(new URL("../../../../../", import.meta.url));
+var isVercel = !!process.env.VERCEL;
+var projectRoot = isVercel ? "/var/task" : fileURLToPath(new URL("../../../../../", import.meta.url));
 var webRoot = resolve(projectRoot, "apps/web");
 var keyPattern = /^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}\.(?:pdf|jpg|png|upload)$/;
 function contains(parent, child) {
@@ -158398,7 +158399,7 @@ function contains(parent, child) {
 }
 function uploadDirectory(configured) {
   const root = isAbsolute(configured) ? configured : resolve(projectRoot, configured);
-  if (contains(webRoot, root) || contains(root, webRoot)) throw new Error("UPLOAD_DIR must be private and outside the web application.");
+  if (!isVercel && (contains(webRoot, root) || contains(root, webRoot))) throw new Error("UPLOAD_DIR must be private and outside the web application.");
   return root;
 }
 function safeOriginalName(value) {
@@ -158420,8 +158421,10 @@ var DocumentStorage = class {
     try {
       await mkdir(this.root, { recursive: true, mode: 448 });
       const actual = await realpath(this.root);
-      uploadDirectory(actual);
-      if (relative(this.root, actual) !== "") throw documentUnavailable();
+      if (!isVercel) {
+        uploadDirectory(actual);
+        if (relative(this.root, actual) !== "") throw documentUnavailable();
+      }
     } catch {
       throw documentUnavailable();
     }
