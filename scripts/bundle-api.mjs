@@ -5,17 +5,17 @@ esbuild.buildSync({
   bundle: true,
   platform: 'node',
   format: 'esm',
+  target: 'node20',
   outfile: 'apps/api/api/index.js',
+  banner: {
+    js: [
+      "import { createRequire as __createRequire } from 'node:module';",
+      "const require = __createRequire(import.meta.url);",
+    ].join('\n'),
+  },
   external: [
     'bcrypt',
-    'cookie-parser',
-    'express',
-    'file-type',
-    'helmet',
-    'jose',
-    'mongoose',
-    'multer',
-    'zod',
   ],
 });
-console.log('Successfully bundled apps/api/api/index.js with @lms/shared inlined.');
+console.log('Successfully bundled apps/api/api/index.js (fully self-contained except bcrypt).');
+

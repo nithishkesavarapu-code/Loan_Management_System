@@ -1,5 +1,5 @@
 import express from 'express';
-import { createRequire } from 'node:module';
+import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { z } from 'zod';
 import type { RequestHandler } from 'express';
@@ -16,8 +16,6 @@ import { documentRoutes } from './modules/documents/document.routes.js';
 import { borrowerLoanRoutes } from './modules/loans/loan.routes.js';
 import { disbursementRoutes, sanctionRoutes } from './modules/loans/operations.routes.js';
 import { collectionRoutes } from './modules/payments/payment.routes.js';
-
-const helmet = createRequire(import.meta.url)('helmet') as () => RequestHandler;
 
 export function createApp(env: Environment, checkDatabase: () => Promise<void> = assertDatabaseReady) {
   const app = express();
