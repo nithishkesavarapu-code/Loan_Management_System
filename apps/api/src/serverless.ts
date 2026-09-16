@@ -45,7 +45,7 @@ export default async function handler(req: IncomingMessage & { originalUrl?: str
       res.on('finish', resolve);
       res.on('close', resolve);
       res.on('error', reject);
-      appInstance(req, res, (err?: unknown) => {
+      (appInstance as unknown as (req: IncomingMessage, res: ServerResponse, cb: (err?: unknown) => void) => void)(req, res, (err?: unknown) => {
         if (err) reject(err);
         else resolve();
       });
