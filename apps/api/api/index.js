@@ -197,11 +197,11 @@ var require_common = __commonJS({
         let enableOverride = null;
         let namespacesCache;
         let enabledCache;
-        function debug2(...args) {
-          if (!debug2.enabled) {
+        function debug(...args) {
+          if (!debug.enabled) {
             return;
           }
-          const self2 = debug2;
+          const self2 = debug;
           const curr = Number(/* @__PURE__ */ new Date());
           const ms = curr - (prevTime || curr);
           self2.diff = ms;
@@ -231,12 +231,12 @@ var require_common = __commonJS({
           const logFn = self2.log || createDebug.log;
           logFn.apply(self2, args);
         }
-        debug2.namespace = namespace;
-        debug2.useColors = createDebug.useColors();
-        debug2.color = createDebug.selectColor(namespace);
-        debug2.extend = extend2;
-        debug2.destroy = createDebug.destroy;
-        Object.defineProperty(debug2, "enabled", {
+        debug.namespace = namespace;
+        debug.useColors = createDebug.useColors();
+        debug.color = createDebug.selectColor(namespace);
+        debug.extend = extend2;
+        debug.destroy = createDebug.destroy;
+        Object.defineProperty(debug, "enabled", {
           enumerable: true,
           configurable: false,
           get: () => {
@@ -254,9 +254,9 @@ var require_common = __commonJS({
           }
         });
         if (typeof createDebug.init === "function") {
-          createDebug.init(debug2);
+          createDebug.init(debug);
         }
-        return debug2;
+        return debug;
       }
       function extend2(namespace, delimiter) {
         const newDebug = createDebug(this.namespace + (typeof delimiter === "undefined" ? ":" : delimiter) + namespace);
@@ -815,11 +815,11 @@ var require_node = __commonJS({
     function load() {
       return process.env.DEBUG;
     }
-    function init(debug2) {
-      debug2.inspectOpts = {};
+    function init(debug) {
+      debug.inspectOpts = {};
       const keys = Object.keys(exports.inspectOpts);
       for (let i = 0; i < keys.length; i++) {
-        debug2.inspectOpts[keys[i]] = exports.inspectOpts[keys[i]];
+        debug.inspectOpts[keys[i]] = exports.inspectOpts[keys[i]];
       }
     }
     module.exports = require_common()(exports);
@@ -15406,14 +15406,14 @@ var require_mime_types = __commonJS({
       }
       return exports.types[extension2] || false;
     }
-    function populateMaps(extensions2, types) {
+    function populateMaps(extensions, types) {
       Object.keys(db).forEach(function forEachMimeType(type) {
         var mime = db[type];
         var exts = mime.extensions;
         if (!exts || !exts.length) {
           return;
         }
-        extensions2[type] = exts;
+        extensions[type] = exts;
         for (var i = 0; i < exts.length; i++) {
           var extension2 = exts[i];
           types[extension2] = _preferredType(extension2, types[extension2], type);
@@ -15802,10 +15802,10 @@ var require_read = __commonJS({
     var zlib = __require("node:zlib");
     var hasBody = require_type_is().hasBody;
     var { getCharset } = require_utils();
-    module.exports = read2;
-    function read2(req, res, next, parse3, debug2, options) {
+    module.exports = read;
+    function read(req, res, next, parse3, debug, options) {
       if (onFinished.isFinished(req)) {
-        debug2("body already parsed");
+        debug("body already parsed");
         next();
         return;
       }
@@ -15813,13 +15813,13 @@ var require_read = __commonJS({
         req.body = void 0;
       }
       if (!hasBody(req)) {
-        debug2("skip empty body");
+        debug("skip empty body");
         next();
         return;
       }
-      debug2("content-type %j", req.headers["content-type"]);
+      debug("content-type %j", req.headers["content-type"]);
       if (!options.shouldParse(req)) {
-        debug2("skip parsing");
+        debug("skip parsing");
         next();
         return;
       }
@@ -15827,7 +15827,7 @@ var require_read = __commonJS({
       if (options?.skipCharset !== true) {
         encoding = getCharset(req) || options.defaultCharset;
         if (!!options?.isValidCharset && !options.isValidCharset(encoding)) {
-          debug2("invalid charset");
+          debug("invalid charset");
           next(createError(415, 'unsupported charset "' + encoding.toUpperCase() + '"', {
             charset: encoding,
             type: "charset.unsupported"
@@ -15840,7 +15840,7 @@ var require_read = __commonJS({
       let stream;
       const verify = opts.verify;
       try {
-        stream = contentstream(req, debug2, opts.inflate);
+        stream = contentstream(req, debug, opts.inflate);
         length = stream.length;
         stream.length = void 0;
       } catch (err) {
@@ -15854,7 +15854,7 @@ var require_read = __commonJS({
           type: "charset.unsupported"
         }));
       }
-      debug2("read body");
+      debug("read body");
       getBody(stream, opts, function(error62, body) {
         if (error62) {
           let _error;
@@ -15877,7 +15877,7 @@ var require_read = __commonJS({
         }
         if (verify) {
           try {
-            debug2("verify body");
+            debug("verify body");
             verify(req, res, body, encoding);
           } catch (err) {
             next(createError(403, err, {
@@ -15889,7 +15889,7 @@ var require_read = __commonJS({
         }
         let str = body;
         try {
-          debug2("parse body");
+          debug("parse body");
           str = typeof body !== "string" && encoding !== null ? iconv.decode(body, encoding) : body;
           req.body = parse3(str, encoding);
         } catch (err) {
@@ -15902,10 +15902,10 @@ var require_read = __commonJS({
         next();
       });
     }
-    function contentstream(req, debug2, inflate) {
+    function contentstream(req, debug, inflate) {
       const encoding = (req.headers["content-encoding"] || "identity").toLowerCase();
       const length = req.headers["content-length"];
-      debug2('content-encoding "%s"', encoding);
+      debug('content-encoding "%s"', encoding);
       if (inflate === false && encoding !== "identity") {
         throw createError(415, "content encoding unsupported", {
           encoding,
@@ -15916,20 +15916,20 @@ var require_read = __commonJS({
         req.length = length;
         return req;
       }
-      const stream = createDecompressionStream(encoding, debug2);
+      const stream = createDecompressionStream(encoding, debug);
       req.pipe(stream);
       return stream;
     }
-    function createDecompressionStream(encoding, debug2) {
+    function createDecompressionStream(encoding, debug) {
       switch (encoding) {
         case "deflate":
-          debug2("inflate body");
+          debug("inflate body");
           return zlib.createInflate();
         case "gzip":
-          debug2("gunzip body");
+          debug("gunzip body");
           return zlib.createGunzip();
         case "br":
-          debug2("brotli decompress body");
+          debug("brotli decompress body");
           return zlib.createBrotliDecompress();
         default:
           throw createError(415, 'unsupported content encoding "' + encoding + '"', {
@@ -15953,8 +15953,8 @@ var require_read = __commonJS({
 var require_json = __commonJS({
   "node_modules/body-parser/lib/types/json.js"(exports, module) {
     "use strict";
-    var debug2 = require_src()("body-parser:json");
-    var read2 = require_read();
+    var debug = require_src()("body-parser:json");
+    var read = require_read();
     var { normalizeOptions } = require_utils();
     module.exports = json3;
     var FIRST_CHAR_REGEXP = /^[\x20\x09\x0a\x0d]*([^\x20\x09\x0a\x0d])/;
@@ -15969,7 +15969,7 @@ var require_json = __commonJS({
         isValidCharset: (charset) => charset.slice(0, 4) === "utf-"
       };
       return function jsonParser(req, res, next) {
-        read2(req, res, next, parse3, debug2, readOptions);
+        read(req, res, next, parse3, debug, readOptions);
       };
     }
     function createJsonParser(options) {
@@ -15982,11 +15982,11 @@ var require_json = __commonJS({
           }
           const first = firstchar(body);
           if (first !== "{" && first !== "[") {
-            debug2("strict violation");
+            debug("strict violation");
             throw createStrictSyntaxError(body, first);
           }
           try {
-            debug2("parse json");
+            debug("parse json");
             return JSON.parse(body, reviver);
           } catch (e) {
             throw normalizeJsonSyntaxError(e, {
@@ -16001,7 +16001,7 @@ var require_json = __commonJS({
           return {};
         }
         try {
-          debug2("parse json");
+          debug("parse json");
           return JSON.parse(body, reviver);
         } catch (e) {
           throw normalizeJsonSyntaxError(e, {
@@ -16052,8 +16052,8 @@ var require_json = __commonJS({
 var require_raw = __commonJS({
   "node_modules/body-parser/lib/types/raw.js"(exports, module) {
     "use strict";
-    var debug2 = require_src()("body-parser:raw");
-    var read2 = require_read();
+    var debug = require_src()("body-parser:raw");
+    var read = require_read();
     var { normalizeOptions, passthrough } = require_utils();
     module.exports = raw;
     function raw(options) {
@@ -16064,7 +16064,7 @@ var require_raw = __commonJS({
         skipCharset: true
       };
       return function rawParser(req, res, next) {
-        read2(req, res, next, passthrough, debug2, readOptions);
+        read(req, res, next, passthrough, debug, readOptions);
       };
     }
   }
@@ -16074,14 +16074,14 @@ var require_raw = __commonJS({
 var require_text = __commonJS({
   "node_modules/body-parser/lib/types/text.js"(exports, module) {
     "use strict";
-    var debug2 = require_src()("body-parser:text");
-    var read2 = require_read();
+    var debug = require_src()("body-parser:text");
+    var read = require_read();
     var { normalizeOptions, passthrough } = require_utils();
     module.exports = text;
     function text(options) {
       const normalizedOptions = normalizeOptions(options, "text/plain");
       return function textParser(req, res, next) {
-        read2(req, res, next, passthrough, debug2, normalizedOptions);
+        read(req, res, next, passthrough, debug, normalizedOptions);
       };
     }
   }
@@ -16120,7 +16120,7 @@ var require_object_inspect = __commonJS({
     var hasWeakRef = typeof WeakRef === "function" && WeakRef.prototype;
     var weakRefDeref = hasWeakRef ? WeakRef.prototype.deref : null;
     var booleanValueOf = Boolean.prototype.valueOf;
-    var objectToString2 = Object.prototype.toString;
+    var objectToString = Object.prototype.toString;
     var functionToString = Function.prototype.toString;
     var $match = String.prototype.match;
     var $slice = String.prototype.slice;
@@ -16221,7 +16221,7 @@ var require_object_inspect = __commonJS({
       var indent = getIndent(opts, depth);
       if (typeof seen === "undefined") {
         seen = [];
-      } else if (indexOf2(seen, obj) >= 0) {
+      } else if (indexOf(seen, obj) >= 0) {
         return "[Circular]";
       }
       function inspect(value, from, noIndent) {
@@ -16418,7 +16418,7 @@ var require_object_inspect = __commonJS({
       return hasOwn.call(obj, key);
     }
     function toStr(obj) {
-      return objectToString2.call(obj);
+      return objectToString.call(obj);
     }
     function nameOf(f) {
       if (f.name) {
@@ -16430,7 +16430,7 @@ var require_object_inspect = __commonJS({
       }
       return null;
     }
-    function indexOf2(xs, x) {
+    function indexOf(xs, x) {
       if (xs.indexOf) {
         return xs.indexOf(x);
       }
@@ -16562,7 +16562,7 @@ var require_object_inspect = __commonJS({
     }
     function singleLineValues(xs) {
       for (var i = 0; i < xs.length; i++) {
-        if (indexOf2(xs[i], "\n") >= 0) {
+        if (indexOf(xs[i], "\n") >= 0) {
           return false;
         }
       }
@@ -18690,8 +18690,8 @@ var require_urlencoded = __commonJS({
   "node_modules/body-parser/lib/types/urlencoded.js"(exports, module) {
     "use strict";
     var createError = require_http_errors();
-    var debug2 = require_src()("body-parser:urlencoded");
-    var read2 = require_read();
+    var debug = require_src()("body-parser:urlencoded");
+    var read = require_read();
     var qs = require_lib2();
     var { normalizeOptions } = require_utils();
     module.exports = urlencoded;
@@ -18707,7 +18707,7 @@ var require_urlencoded = __commonJS({
         isValidCharset: (charset) => charset === "utf-8" || charset === "iso-8859-1"
       };
       return function urlencodedParser(req, res, next) {
-        read2(req, res, next, parse3, debug2, readOptions);
+        read(req, res, next, parse3, debug, readOptions);
       };
     }
     function createQueryParser(options) {
@@ -18729,13 +18729,13 @@ var require_urlencoded = __commonJS({
         if (!body.length) return {};
         const paramCount = parameterCount(body, parameterLimit);
         if (paramCount === void 0) {
-          debug2("too many parameters");
+          debug("too many parameters");
           throw createError(413, "too many parameters", {
             type: "parameters.too.many"
           });
         }
         const arrayLimit = extended2 ? Math.max(100, paramCount) : paramCount;
-        debug2("parse " + (extended2 ? "extended " : "") + "urlencoding");
+        debug("parse " + (extended2 ? "extended " : "") + "urlencoding");
         try {
           return qs.parse(body, {
             allowPrototypes: true,
@@ -18959,7 +18959,7 @@ var require_parseurl = __commonJS({
 var require_finalhandler = __commonJS({
   "node_modules/finalhandler/index.js"(exports, module) {
     "use strict";
-    var debug2 = require_src()("finalhandler");
+    var debug = require_src()("finalhandler");
     var encodeUrl = require_encodeurl();
     var escapeHtml = require_escape_html();
     var onFinished = require_on_finished();
@@ -18980,7 +18980,7 @@ var require_finalhandler = __commonJS({
         var msg;
         var status;
         if (!err && res.headersSent) {
-          debug2("cannot 404 after headers sent");
+          debug("cannot 404 after headers sent");
           return;
         }
         if (err) {
@@ -18995,12 +18995,12 @@ var require_finalhandler = __commonJS({
           status = 404;
           msg = "Cannot " + req.method + " " + encodeUrl(getResourceName(req));
         }
-        debug2("default %s", status);
+        debug("default %s", status);
         if (err && onerror) {
           setImmediate(onerror, err, req, res);
         }
         if (res.headersSent) {
-          debug2("cannot %d after headers sent", status);
+          debug("cannot %d after headers sent", status);
           if (req.socket) {
             req.socket.destroy();
           }
@@ -19049,7 +19049,7 @@ var require_finalhandler = __commonJS({
       return status;
     }
     function send(req, res, status, headers, message2) {
-      function write2() {
+      function write() {
         var body = createHtmlDocument(message2);
         res.statusCode = status;
         if (req.httpVersionMajor < 2) {
@@ -19072,11 +19072,11 @@ var require_finalhandler = __commonJS({
         res.end(body, "utf8");
       }
       if (isFinished(req)) {
-        write2();
+        write();
         return;
       }
       req.unpipe();
-      onFinished(req, write2);
+      onFinished(req, write);
       req.resume();
     }
   }
@@ -19086,7 +19086,7 @@ var require_finalhandler = __commonJS({
 var require_view = __commonJS({
   "node_modules/express/lib/view.js"(exports, module) {
     "use strict";
-    var debug2 = require_src()("express:view");
+    var debug = require_src()("express:view");
     var path = __require("node:path");
     var fs = __require("node:fs");
     var dirname = path.dirname;
@@ -19111,7 +19111,7 @@ var require_view = __commonJS({
       }
       if (!opts.engines[this.ext]) {
         var mod = this.ext.slice(1);
-        debug2('require "%s"', mod);
+        debug('require "%s"', mod);
         var fn = __require(mod).__express;
         if (typeof fn !== "function") {
           throw new Error('Module "' + mod + '" does not provide a view engine.');
@@ -19124,7 +19124,7 @@ var require_view = __commonJS({
     View.prototype.lookup = function lookup(name) {
       var path2;
       var roots = [].concat(this.root);
-      debug2('lookup "%s"', name);
+      debug('lookup "%s"', name);
       for (var i = 0; i < roots.length && !path2; i++) {
         var root = roots[i];
         var loc = resolve2(root, name);
@@ -19136,7 +19136,7 @@ var require_view = __commonJS({
     };
     View.prototype.render = function render(options, callback) {
       var sync = true;
-      debug2('render "%s"', this.path);
+      debug('render "%s"', this.path);
       this.engine(this.path, options, function onRender() {
         if (!sync) {
           return callback.apply(this, arguments);
@@ -19166,7 +19166,7 @@ var require_view = __commonJS({
       }
     };
     function tryStat(path2) {
-      debug2('stat "%s"', path2);
+      debug('stat "%s"', path2);
       try {
         return fs.statSync(path2);
       } catch (e) {
@@ -28788,14 +28788,14 @@ var require_mime_types2 = __commonJS({
       }
       return exports.types[extension2] || false;
     }
-    function populateMaps(extensions2, types) {
+    function populateMaps(extensions, types) {
       Object.keys(db).forEach(function forEachMimeType(type) {
         var mime = db[type];
         var exts = mime.extensions;
         if (!exts || !exts.length) {
           return;
         }
-        extensions2[type] = exts;
+        extensions[type] = exts;
         for (var i = 0; i < exts.length; i++) {
           var extension2 = exts[i];
           types[extension2] = _preferredType(extension2, types[extension2], type);
@@ -30258,7 +30258,7 @@ var require_layer = __commonJS({
     "use strict";
     var isPromise = require_is_promise();
     var pathRegexp = require_dist3();
-    var debug2 = require_src()("router:layer");
+    var debug = require_src()("router:layer");
     var deprecate = require_depd()("router");
     var TRAILING_SLASH_REGEXP = /\/+$/;
     var MATCHING_GROUP_REGEXP = /\((?:\?<(.*?)>)?(?!\?)/g;
@@ -30267,7 +30267,7 @@ var require_layer = __commonJS({
       if (!(this instanceof Layer)) {
         return new Layer(path, options, fn);
       }
-      debug2("new %o", path);
+      debug("new %o", path);
       const opts = options || {};
       this.handle = fn;
       this.keys = [];
@@ -30406,7 +30406,7 @@ var require_layer = __commonJS({
 var require_route = __commonJS({
   "node_modules/router/lib/route.js"(exports, module) {
     "use strict";
-    var debug2 = require_src()("router:route");
+    var debug = require_src()("router:route");
     var Layer = require_layer();
     var { METHODS } = __require("node:http");
     var slice = Array.prototype.slice;
@@ -30414,7 +30414,7 @@ var require_route = __commonJS({
     var methods = METHODS.map((method) => method.toLowerCase());
     module.exports = Route;
     function Route(path) {
-      debug2("new %o", path);
+      debug("new %o", path);
       this.path = path;
       this.stack = [];
       this.methods = /* @__PURE__ */ Object.create(null);
@@ -30510,7 +30510,7 @@ var require_route = __commonJS({
           if (typeof fn !== "function") {
             throw new TypeError("argument handler must be a function");
           }
-          debug2("%s %s", method, this.path);
+          debug("%s %s", method, this.path);
           const layer = Layer("/", {}, fn);
           layer.method = method;
           this.methods[method] = true;
@@ -30531,7 +30531,7 @@ var require_router = __commonJS({
     var { METHODS } = __require("node:http");
     var parseUrl = require_parseurl();
     var Route = require_route();
-    var debug2 = require_src()("router");
+    var debug = require_src()("router");
     var deprecate = require_depd()("router");
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
@@ -30580,7 +30580,7 @@ var require_router = __commonJS({
       if (!callback) {
         throw new TypeError("argument callback is required");
       }
-      debug2("dispatching %s %s", req.method, req.url);
+      debug("dispatching %s %s", req.method, req.url);
       let idx = 0;
       let methods2;
       const protohost = getProtohost(req.url) || "";
@@ -30686,7 +30686,7 @@ var require_router = __commonJS({
             next(layerError);
             return;
           }
-          debug2("trim prefix (%s) from url %s", layerPath, req.url);
+          debug("trim prefix (%s) from url %s", layerPath, req.url);
           removed = layerPath;
           req.url = protohost + req.url.slice(protohost.length + removed.length);
           if (!protohost && req.url[0] !== "/") {
@@ -30695,7 +30695,7 @@ var require_router = __commonJS({
           }
           req.baseUrl = parentUrl + (removed[removed.length - 1] === "/" ? removed.substring(0, removed.length - 1) : removed);
         }
-        debug2("%s %s : %s", layer.name, layerPath, req.originalUrl);
+        debug("%s %s : %s", layer.name, layerPath, req.originalUrl);
         if (layerError) {
           layer.handleError(layerError, req, res, next);
         } else {
@@ -30725,7 +30725,7 @@ var require_router = __commonJS({
         if (typeof fn !== "function") {
           throw new TypeError("argument handler must be a function");
         }
-        debug2("use %o %s", path, fn.name || "<anonymous>");
+        debug("use %o %s", path, fn.name || "<anonymous>");
         const layer = new Layer(path, {
           sensitive: this.caseSensitive,
           strict: false,
@@ -30925,7 +30925,7 @@ var require_application = __commonJS({
   "node_modules/express/lib/application.js"(exports, module) {
     "use strict";
     var finalhandler = require_finalhandler();
-    var debug2 = require_src()("express:application");
+    var debug = require_src()("express:application");
     var View = require_view();
     var http = __require("node:http");
     var methods = require_utils3().methods;
@@ -30971,7 +30971,7 @@ var require_application = __commonJS({
         configurable: true,
         value: true
       });
-      debug2("booting in %s mode", env3);
+      debug("booting in %s mode", env3);
       this.on("mount", function onmount(parent) {
         if (this.settings[trustProxyDefaultSymbol] === true && typeof parent.settings["trust proxy fn"] === "function") {
           delete this.settings["trust proxy"];
@@ -31031,7 +31031,7 @@ var require_application = __commonJS({
         if (!fn2 || !fn2.handle || !fn2.set) {
           return router.use(path, fn2);
         }
-        debug2(".use app under %s", path);
+        debug(".use app under %s", path);
         fn2.mountpath = path;
         fn2.parent = this;
         router.use(path, function mounted_app(req, res, next) {
@@ -31071,7 +31071,7 @@ var require_application = __commonJS({
       if (arguments.length === 1) {
         return this.settings[setting];
       }
-      debug2('set "%s" to %o', setting, val);
+      debug('set "%s" to %o', setting, val);
       this.settings[setting] = val;
       switch (setting) {
         case "etag":
@@ -41223,14 +41223,14 @@ var require_mime_types3 = __commonJS({
       }
       return exports.types[extension2] || false;
     }
-    function populateMaps(extensions2, types) {
+    function populateMaps(extensions, types) {
       Object.keys(db).forEach(function forEachMimeType(type) {
         var mime = db[type];
         var exts = mime.extensions;
         if (!exts || !exts.length) {
           return;
         }
-        extensions2[type] = exts;
+        extensions[type] = exts;
         for (var i = 0; i < exts.length; i++) {
           var extension2 = exts[i];
           types[extension2] = _preferredType(extension2, types[extension2], type);
@@ -41432,12 +41432,12 @@ var require_range_parser = __commonJS({
       var ranges = [];
       ranges.type = str.slice(0, index);
       for (var i = 0; i < arr.length; i++) {
-        var indexOf2 = arr[i].indexOf("-");
-        if (indexOf2 === -1) {
+        var indexOf = arr[i].indexOf("-");
+        if (indexOf === -1) {
           return -2;
         }
-        var startStr = arr[i].slice(0, indexOf2).trim();
-        var endStr = arr[i].slice(indexOf2 + 1).trim();
+        var startStr = arr[i].slice(0, indexOf).trim();
+        var endStr = arr[i].slice(indexOf + 1).trim();
         var start = parsePos(startStr);
         var end = parsePos(endStr);
         if (startStr.length === 0) {
@@ -41662,7 +41662,7 @@ var require_content_disposition = __commonJS({
     "use strict";
     module.exports = contentDisposition;
     module.exports.parse = parse3;
-    var utf8Decoder2 = new TextDecoder("utf-8");
+    var utf8Decoder = new TextDecoder("utf-8");
     var ENCODE_URL_ATTR_CHAR_REGEXP = /[\x00-\x20"'()*,/:;<=>?@[\\\]{}\x7f]/g;
     var NON_LATIN1_REGEXP = /[^\x20-\x7e\xa0-\xff]/g;
     var QESC_REGEXP = /\\([\u0000-\u007f])/g;
@@ -41747,7 +41747,7 @@ var require_content_disposition = __commonJS({
             for (let idx = 0; idx < binary.length; idx++) {
               bytes[idx] = binary.charCodeAt(idx);
             }
-            return utf8Decoder2.decode(bytes);
+            return utf8Decoder.decode(bytes);
           }
         }
       }
@@ -51515,14 +51515,14 @@ var require_mime_types4 = __commonJS({
       }
       return exports.types[extension2] || false;
     }
-    function populateMaps(extensions2, types) {
+    function populateMaps(extensions, types) {
       Object.keys(db).forEach(function forEachMimeType(type) {
         var mime = db[type];
         var exts = mime.extensions;
         if (!exts || !exts.length) {
           return;
         }
-        extensions2[type] = exts;
+        extensions[type] = exts;
         for (var i = 0; i < exts.length; i++) {
           var extension2 = exts[i];
           types[extension2] = _preferredType(extension2, types[extension2], type);
@@ -51559,7 +51559,7 @@ var require_send = __commonJS({
   "node_modules/send/index.js"(exports, module) {
     "use strict";
     var createError = require_http_errors();
-    var debug2 = require_src()("send");
+    var debug = require_src()("send");
     var encodeUrl = require_encodeurl();
     var escapeHtml = require_escape_html();
     var etag = require_etag();
@@ -51659,14 +51659,14 @@ var require_send = __commonJS({
     };
     SendStream.prototype.notModified = function notModified() {
       var res = this.res;
-      debug2("not modified");
+      debug("not modified");
       this.removeContentHeaderFields();
       res.statusCode = 304;
       res.end();
     };
     SendStream.prototype.headersAlreadySent = function headersAlreadySent() {
       var err = new Error("Can't set headers after they are sent.");
-      debug2("headers already sent");
+      debug("headers already sent");
       this.error(500, err);
     };
     SendStream.prototype.isCachable = function isCachable() {
@@ -51741,7 +51741,7 @@ var require_send = __commonJS({
           path2 = normalize("." + sep2 + path2);
         }
         if (UP_PATH_REGEXP.test(path2)) {
-          debug2('malicious path "%s"', path2);
+          debug('malicious path "%s"', path2);
           this.error(403);
           return res;
         }
@@ -51749,7 +51749,7 @@ var require_send = __commonJS({
         path2 = normalize(join(root, path2));
       } else {
         if (UP_PATH_REGEXP.test(path2)) {
-          debug2('malicious path "%s"', path2);
+          debug('malicious path "%s"', path2);
           this.error(403);
           return res;
         }
@@ -51757,7 +51757,7 @@ var require_send = __commonJS({
         path2 = resolve2(path2);
       }
       if (containsDotFile(parts)) {
-        debug2('%s dotfile "%s"', this._dotfiles, path2);
+        debug('%s dotfile "%s"', this._dotfiles, path2);
         switch (this._dotfiles) {
           case "allow":
             break;
@@ -51789,7 +51789,7 @@ var require_send = __commonJS({
         this.headersAlreadySent();
         return;
       }
-      debug2('pipe "%s"', path2);
+      debug('pipe "%s"', path2);
       this.setHeader(path2, stat);
       this.type(path2);
       if (this.isConditionalGET()) {
@@ -51812,18 +51812,18 @@ var require_send = __commonJS({
           combine: true
         });
         if (!this.isRangeFresh()) {
-          debug2("range stale");
+          debug("range stale");
           ranges = -2;
         }
         if (ranges === -1) {
-          debug2("range unsatisfiable");
+          debug("range unsatisfiable");
           res.setHeader("Content-Range", contentRange("bytes", len));
           return this.error(416, {
             headers: { "Content-Range": res.getHeader("Content-Range") }
           });
         }
         if (ranges !== -2 && ranges.length === 1) {
-          debug2("range %j", ranges);
+          debug("range %j", ranges);
           res.statusCode = 206;
           res.setHeader("Content-Range", contentRange("bytes", len, ranges[0]));
           offset += ranges[0].start;
@@ -51845,7 +51845,7 @@ var require_send = __commonJS({
     SendStream.prototype.sendFile = function sendFile(path2) {
       var i = 0;
       var self2 = this;
-      debug2('stat "%s"', path2);
+      debug('stat "%s"', path2);
       fs.stat(path2, function onstat(err, stat) {
         var pathEndsWithSep = path2[path2.length - 1] === sep2;
         if (err && err.code === "ENOENT" && !extname(path2) && !pathEndsWithSep) {
@@ -51862,7 +51862,7 @@ var require_send = __commonJS({
           return err ? self2.onStatError(err) : self2.error(404);
         }
         var p = path2 + "." + self2._extensions[i++];
-        debug2('stat "%s"', p);
+        debug('stat "%s"', p);
         fs.stat(p, function(err2, stat) {
           if (err2) return next(err2);
           if (stat.isDirectory()) return next();
@@ -51880,7 +51880,7 @@ var require_send = __commonJS({
           return self2.error(404);
         }
         var p = join(path2, self2._index[i]);
-        debug2('stat "%s"', p);
+        debug('stat "%s"', p);
         fs.stat(p, function(err2, stat) {
           if (err2) return next(err2);
           if (stat.isDirectory()) return next();
@@ -51913,14 +51913,14 @@ var require_send = __commonJS({
       if (res.getHeader("Content-Type")) return;
       var ext = extname(path2);
       var type2 = mime.contentType(ext) || "application/octet-stream";
-      debug2("content-type %s", type2);
+      debug("content-type %s", type2);
       res.setHeader("Content-Type", type2);
     };
     SendStream.prototype.setHeader = function setHeader(path2, stat) {
       var res = this.res;
       this.emit("headers", res, path2, stat);
       if (this._acceptRanges && !res.getHeader("Accept-Ranges")) {
-        debug2("accept ranges");
+        debug("accept ranges");
         res.setHeader("Accept-Ranges", "bytes");
       }
       if (this._cacheControl && !res.getHeader("Cache-Control")) {
@@ -51928,17 +51928,17 @@ var require_send = __commonJS({
         if (this._immutable) {
           cacheControl += ", immutable";
         }
-        debug2("cache-control %s", cacheControl);
+        debug("cache-control %s", cacheControl);
         res.setHeader("Cache-Control", cacheControl);
       }
       if (this._lastModified && !res.getHeader("Last-Modified")) {
         var modified = stat.mtime.toUTCString();
-        debug2("modified %s", modified);
+        debug("modified %s", modified);
         res.setHeader("Last-Modified", modified);
       }
       if (this._etag && !res.getHeader("ETag")) {
         var val = etag(stat);
-        debug2("etag %s", val);
+        debug("etag %s", val);
         res.setHeader("ETag", val);
       }
     };
@@ -52853,7 +52853,7 @@ var require_bson = __commonJS({
       const g = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(Uint8Array.prototype), Symbol.toStringTag).get;
       return (value) => g.call(value);
     })();
-    function isUint8Array2(value) {
+    function isUint8Array(value) {
       return TypedArrayPrototypeGetSymbolToStringTag(value) === "Uint8Array";
     }
     function isAnyArrayBuffer(value) {
@@ -53052,7 +53052,7 @@ var require_bson = __commonJS({
       }
     })();
     var nodeJsByteUtils = {
-      isUint8Array: isUint8Array2,
+      isUint8Array,
       toLocalBufferType(potentialBuffer) {
         if (Buffer.isBuffer(potentialBuffer)) {
           return potentialBuffer;
@@ -53165,7 +53165,7 @@ var require_bson = __commonJS({
     })();
     var HEX_DIGIT = /(\d|[a-f])/i;
     var webByteUtils = {
-      isUint8Array: isUint8Array2,
+      isUint8Array,
       toLocalBufferType(potentialUint8array) {
         const stringTag = potentialUint8array?.[Symbol.toStringTag] ?? Object.prototype.toString.call(potentialUint8array);
         if (stringTag === "Uint8Array") {
@@ -53811,7 +53811,7 @@ var require_bson = __commonJS({
         if (typeof input2 === "string") {
           return _UUID.isValidUUIDString(input2);
         }
-        if (isUint8Array2(input2)) {
+        if (isUint8Array(input2)) {
           return input2.byteLength === UUID_BYTE_LENGTH;
         }
         return input2._bsontype === "Binary" && input2.sub_type === this.SUBTYPE_UUID && input2.buffer.byteLength === 16;
@@ -54741,7 +54741,7 @@ var require_bson = __commonJS({
         super();
         if (typeof bytes === "string") {
           this.bytes = _Decimal128.fromString(bytes).bytes;
-        } else if (bytes instanceof Uint8Array || isUint8Array2(bytes)) {
+        } else if (bytes instanceof Uint8Array || isUint8Array(bytes)) {
           if (bytes.byteLength !== 16) {
             throw new BSONError("Decimal128 must take a Buffer of 16 bytes");
           }
@@ -56614,7 +56614,7 @@ var require_bson = __commonJS({
           throw new BSONError("serialize does not support non-object as the root input");
         } else if ("_bsontype" in object2 && typeof object2._bsontype === "string") {
           throw new BSONError(`BSON types cannot be serialized as a document`);
-        } else if (isDate(object2) || isRegExp(object2) || isUint8Array2(object2) || isAnyArrayBuffer(object2)) {
+        } else if (isDate(object2) || isRegExp(object2) || isUint8Array(object2) || isAnyArrayBuffer(object2)) {
           throw new BSONError(`date, regexp, typedarray, and arraybuffer cannot be BSON documents`);
         }
         path = /* @__PURE__ */ new Set();
@@ -56702,7 +56702,7 @@ var require_bson = __commonJS({
         } else if (type === "object" && value._bsontype == null) {
           if (value instanceof Date || isDate(value)) {
             index = serializeDate(buffer2, key, value, index);
-          } else if (value instanceof Uint8Array || isUint8Array2(value)) {
+          } else if (value instanceof Uint8Array || isUint8Array(value)) {
             index = serializeBuffer(buffer2, key, value, index);
           } else if (value instanceof RegExp || isRegExp(value)) {
             index = serializeRegExp(buffer2, key, value, index);
@@ -59742,7 +59742,7 @@ var require_utils4 = __commonJS({
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.kDispose = exports.randomBytes = exports.COSMOS_DB_MSG = exports.DOCUMENT_DB_MSG = exports.COSMOS_DB_CHECK = exports.DOCUMENT_DB_CHECK = exports.MONGODB_WARNING_CODE = exports.DEFAULT_PK_FACTORY = exports.HostAddress = exports.BufferPool = exports.List = exports.MongoDBCollectionNamespace = exports.MongoDBNamespace = void 0;
-    exports.isUint8Array = isUint8Array2;
+    exports.isUint8Array = isUint8Array;
     exports.hostMatchesWildcards = hostMatchesWildcards;
     exports.normalizeHintField = normalizeHintField;
     exports.isObject = isObject3;
@@ -59803,7 +59803,7 @@ var require_utils4 = __commonJS({
     var read_preference_1 = require_read_preference();
     var common_1 = require_common2();
     var write_concern_1 = require_write_concern();
-    function isUint8Array2(value) {
+    function isUint8Array(value) {
       return value != null && typeof value === "object" && Symbol.toStringTag in value && value[Symbol.toStringTag] === "Uint8Array";
     }
     function hostMatchesWildcards(host, wildcards) {
@@ -71402,12 +71402,12 @@ var require_encoding2 = __commonJS({
   "node_modules/whatwg-url/lib/encoding.js"(exports, module) {
     "use strict";
     var utf8Encoder = new TextEncoder();
-    var utf8Decoder2 = new TextDecoder("utf-8", { ignoreBOM: true });
+    var utf8Decoder = new TextDecoder("utf-8", { ignoreBOM: true });
     function utf8Encode(string4) {
       return utf8Encoder.encode(string4);
     }
     function utf8DecodeWithoutBOM(bytes) {
-      return utf8Decoder2.decode(bytes);
+      return utf8Decoder.decode(bytes);
     }
     module.exports = {
       utf8Encode,
@@ -74668,7 +74668,7 @@ var require_state_machine = __commonJS({
       "tlsAllowInvalidCertificates",
       "tlsAllowInvalidHostnames"
     ];
-    function debug2(msg) {
+    function debug(msg) {
       if (process3.env.MONGODB_CRYPT_DEBUG) {
         console.error(msg);
       }
@@ -74693,7 +74693,7 @@ var require_state_machine = __commonJS({
         const getState = () => context.state;
         while (getState() !== MONGOCRYPT_CTX_DONE && getState() !== MONGOCRYPT_CTX_ERROR) {
           options.signal?.throwIfAborted();
-          debug2(`[context#${context.id}] ${stateToString.get(getState()) || getState()}`);
+          debug(`[context#${context.id}] ${stateToString.get(getState()) || getState()}`);
           switch (getState()) {
             case MONGOCRYPT_CTX_NEED_MONGO_COLLINFO: {
               const filter = (0, bson_1.deserialize)(context.nextMongoOperation());
@@ -74761,7 +74761,7 @@ var require_state_machine = __commonJS({
         if (getState() === MONGOCRYPT_CTX_ERROR || result == null) {
           const message2 = getStatus().message;
           if (!message2) {
-            debug2(`unidentifiable error in MongoCrypt - received an error status from \`libmongocrypt\` but received no error message.`);
+            debug(`unidentifiable error in MongoCrypt - received an error status from \`libmongocrypt\` but received no error message.`);
           }
           throw new errors_1.MongoCryptError(message2 ?? "unidentifiable error in MongoCrypt - received an error status from `libmongocrypt` but received no error message.");
         }
@@ -81566,19 +81566,19 @@ var require_memory_code_points = __commonJS({
     var sparse_bitfield_1 = __importDefault(require_sparse_bitfield());
     function createMemoryCodePoints(data) {
       let offset = 0;
-      function read2() {
+      function read() {
         const size = data.readUInt32BE(offset);
         offset += 4;
         const codepoints = data.slice(offset, offset + size);
         offset += size;
         return (0, sparse_bitfield_1.default)({ buffer: codepoints });
       }
-      const unassigned_code_points = read2();
-      const commonly_mapped_to_nothing = read2();
-      const non_ASCII_space_characters = read2();
-      const prohibited_characters = read2();
-      const bidirectional_r_al = read2();
-      const bidirectional_l = read2();
+      const unassigned_code_points = read();
+      const commonly_mapped_to_nothing = read();
+      const non_ASCII_space_characters = read();
+      const prohibited_characters = read();
+      const bidirectional_r_al = read();
+      const bidirectional_l = read();
       return {
         unassigned_code_points,
         commonly_mapped_to_nothing,
@@ -86018,7 +86018,7 @@ var require_collection3 = __commonJS({
         const _this = this;
         const globalDebug = _this?.conn?.base?.options?.debug;
         const connectionDebug = _this?.conn?.options?.debug;
-        const debug2 = connectionDebug == null ? globalDebug : connectionDebug;
+        const debug = connectionDebug == null ? globalDebug : connectionDebug;
         if (this.conn.$wasForceClosed) {
           const error62 = new MongooseError("Connection was force closed");
           if (args.length > 0 && typeof args[args.length - 1] === "function") {
@@ -86031,7 +86031,7 @@ var require_collection3 = __commonJS({
         let opId = null;
         let argsArray = null;
         const hasOperationListeners = this.conn.listenerCount("operation-start") > 0 || this.conn.listenerCount("operation-end") > 0;
-        if (hasOperationListeners || debug2) {
+        if (hasOperationListeners || debug) {
           opId = new ObjectId2();
         }
         let timeout = null;
@@ -86067,8 +86067,8 @@ var require_collection3 = __commonJS({
             return this[i].apply(this, args);
           });
         }
-        if (debug2) {
-          if (typeof debug2 === "function") {
+        if (debug) {
+          if (typeof debug === "function") {
             if (argsArray == null) {
               argsArray = Array.from(args);
             }
@@ -86078,16 +86078,16 @@ var require_collection3 = __commonJS({
             } else {
               argsToAdd = argsArray;
             }
-            debug2.apply(
+            debug.apply(
               _this,
               [_this.name, i].concat(argsToAdd)
             );
-          } else if (debug2 instanceof stream.Writable) {
-            this.$printToStream(_this.name, i, args, debug2);
+          } else if (debug instanceof stream.Writable) {
+            this.$printToStream(_this.name, i, args, debug);
           } else {
-            const color = debug2.color == null ? true : debug2.color;
-            const shell = debug2.shell == null ? false : debug2.shell;
-            const timestamp = debug2.timestamp == null ? false : debug2.timestamp;
+            const color = debug.color == null ? true : debug.color;
+            const shell = debug.shell == null ? false : debug.shell;
+            const timestamp = debug.timestamp == null ? false : debug.timestamp;
             this.$print(_this.name, i, args, color, shell, timestamp);
           }
         }
@@ -108174,7 +108174,7 @@ var require_mquery = __commonJS({
     var assert2 = __require("assert");
     var util = __require("util");
     var utils = require_utils7();
-    var debug2 = util.debuglog("mquery");
+    var debug = util.debuglog("mquery");
     function Query(criteria, options) {
       if (!(this instanceof Query))
         return new Query(criteria, options);
@@ -108794,7 +108794,7 @@ var require_mquery = __commonJS({
       } else {
         options.fields = this._fieldsForExec();
       }
-      debug2("find", this._collection.collectionName, conds, options);
+      debug("find", this._collection.collectionName, conds, options);
       return this._collection.find(conds, options);
     };
     Query.prototype.cursor = function cursor(criteria) {
@@ -108812,7 +108812,7 @@ var require_mquery = __commonJS({
       } else {
         options.fields = this._fieldsForExec();
       }
-      debug2("findCursor", this._collection.collectionName, conds, options);
+      debug("findCursor", this._collection.collectionName, conds, options);
       return this._collection.findCursor(conds, options);
     };
     Query.prototype.findOne = function(criteria) {
@@ -108830,7 +108830,7 @@ var require_mquery = __commonJS({
       } else {
         options.fields = this._fieldsForExec();
       }
-      debug2("findOne", this._collection.collectionName, conds, options);
+      debug("findOne", this._collection.collectionName, conds, options);
       return this._collection.findOne(conds, options);
     };
     Query.prototype.countDocuments = function(filter) {
@@ -108844,7 +108844,7 @@ var require_mquery = __commonJS({
     Query.prototype._countDocuments = async function _countDocuments() {
       const conds = this._conditions;
       const options = this._optionsForExec();
-      debug2("countDocuments", this._collection.collectionName, conds, options);
+      debug("countDocuments", this._collection.collectionName, conds, options);
       return this._collection.countDocuments(conds, options);
     };
     Query.prototype.estimatedDocumentCount = function() {
@@ -108855,7 +108855,7 @@ var require_mquery = __commonJS({
     Query.prototype._estimatedDocumentCount = async function _estimatedDocumentCount() {
       const conds = this._conditions;
       const options = this._optionsForExec();
-      debug2("estimatedDocumentCount", this._collection.collectionName, conds, options);
+      debug("estimatedDocumentCount", this._collection.collectionName, conds, options);
       return this._collection.estimatedDocumentCount(conds, options);
     };
     Query.prototype.distinct = function(criteria, field) {
@@ -108916,7 +108916,7 @@ var require_mquery = __commonJS({
       const options = query._optionsForExec();
       const criteria = query._conditions;
       const doc = query._updateForExec();
-      debug2(op, query._collection.collectionName, criteria, doc, options);
+      debug(op, query._collection.collectionName, criteria, doc, options);
       return query._collection[op](criteria, doc, options);
     }
     Query.prototype.deleteOne = function(criteria) {
@@ -108930,7 +108930,7 @@ var require_mquery = __commonJS({
       const options = this._optionsForExec();
       delete options.justOne;
       const conds = this._conditions;
-      debug2("deleteOne", this._collection.collectionName, conds, options);
+      debug("deleteOne", this._collection.collectionName, conds, options);
       return this._collection.deleteOne(conds, options);
     };
     Query.prototype.deleteMany = function(criteria) {
@@ -108982,7 +108982,7 @@ var require_mquery = __commonJS({
       const conds = this._conditions;
       const replacement = this._updateForExec();
       const options = this._optionsForExec();
-      debug2("findOneAndReplace", this._collection.collectionName, conds, replacement, options);
+      debug("findOneAndReplace", this._collection.collectionName, conds, replacement, options);
       return this._collection.findOneAndReplace(conds, replacement, options);
     };
     Query.prototype.findOneAndDelete = function(filter, options) {
@@ -108997,7 +108997,7 @@ var require_mquery = __commonJS({
     Query.prototype._findOneAndDelete = async function() {
       const options = this._optionsForExec();
       const conds = this._conditions;
-      debug2("findOneAndDelete", this._collection.collectionName, conds, options);
+      debug("findOneAndDelete", this._collection.collectionName, conds, options);
       return this._collection.findOneAndDelete(conds, options);
     };
     Query.prototype.setTraceFunction = function(traceFunction) {
@@ -109883,7 +109883,7 @@ var require_query = __commonJS({
       this._mongooseOptions.sanitizeProjection = value;
       return this;
     };
-    Query.prototype.read = function read2(mode, tags) {
+    Query.prototype.read = function read(mode, tags) {
       if (typeof mode === "string") {
         mode = handleReadPreferenceAliases(mode);
         this.options.readPreference = { mode, tags };
@@ -112200,7 +112200,7 @@ var require_aggregate2 = __commonJS({
     var { modelSymbol } = require_symbols();
     var { createTracedChannel } = require_tracing();
     var { trace: traceAggregate } = createTracedChannel("mongoose:aggregate");
-    var read2 = Query.prototype.read;
+    var read = Query.prototype.read;
     var readConcern = Query.prototype.readConcern;
     var validRedactStringValues = /* @__PURE__ */ new Set(["$$DESCEND", "$$PRUNE", "$$KEEP"]);
     function Aggregate(pipeline2, modelOrConn) {
@@ -112391,7 +112391,7 @@ var require_aggregate2 = __commonJS({
       return this.append({ $unionWith: options });
     };
     Aggregate.prototype.read = function(pref, tags) {
-      read2.call(this, pref, tags);
+      read.call(this, pref, tags);
       return this;
     };
     Aggregate.prototype.readConcern = function(level) {
@@ -127847,7 +127847,7 @@ var require_mime_types5 = __commonJS({
       }
       return exports.types[extension2] || false;
     }
-    function populateMaps(extensions2, types) {
+    function populateMaps(extensions, types) {
       var preference = ["nginx", "apache", void 0, "iana"];
       Object.keys(db).forEach(function forEachMimeType(type) {
         var mime = db[type];
@@ -127855,7 +127855,7 @@ var require_mime_types5 = __commonJS({
         if (!exts || !exts.length) {
           return;
         }
-        extensions2[type] = exts;
+        extensions[type] = exts;
         for (var i = 0; i < exts.length; i++) {
           var extension2 = exts[i];
           if (types[extension2]) {
@@ -132594,89 +132594,6 @@ var require_multer = __commonJS({
     module.exports.diskStorage = diskStorage;
     module.exports.memoryStorage = memoryStorage;
     module.exports.MulterError = MulterError;
-  }
-});
-
-// node_modules/ieee754/index.js
-var require_ieee754 = __commonJS({
-  "node_modules/ieee754/index.js"(exports) {
-    exports.read = function(buffer, offset, isLE, mLen, nBytes) {
-      var e, m;
-      var eLen = nBytes * 8 - mLen - 1;
-      var eMax = (1 << eLen) - 1;
-      var eBias = eMax >> 1;
-      var nBits = -7;
-      var i = isLE ? nBytes - 1 : 0;
-      var d = isLE ? -1 : 1;
-      var s = buffer[offset + i];
-      i += d;
-      e = s & (1 << -nBits) - 1;
-      s >>= -nBits;
-      nBits += eLen;
-      for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {
-      }
-      m = e & (1 << -nBits) - 1;
-      e >>= -nBits;
-      nBits += mLen;
-      for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {
-      }
-      if (e === 0) {
-        e = 1 - eBias;
-      } else if (e === eMax) {
-        return m ? NaN : (s ? -1 : 1) * Infinity;
-      } else {
-        m = m + Math.pow(2, mLen);
-        e = e - eBias;
-      }
-      return (s ? -1 : 1) * m * Math.pow(2, e - mLen);
-    };
-    exports.write = function(buffer, value, offset, isLE, mLen, nBytes) {
-      var e, m, c;
-      var eLen = nBytes * 8 - mLen - 1;
-      var eMax = (1 << eLen) - 1;
-      var eBias = eMax >> 1;
-      var rt = mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0;
-      var i = isLE ? 0 : nBytes - 1;
-      var d = isLE ? 1 : -1;
-      var s = value < 0 || value === 0 && 1 / value < 0 ? 1 : 0;
-      value = Math.abs(value);
-      if (isNaN(value) || value === Infinity) {
-        m = isNaN(value) ? 1 : 0;
-        e = eMax;
-      } else {
-        e = Math.floor(Math.log(value) / Math.LN2);
-        if (value * (c = Math.pow(2, -e)) < 1) {
-          e--;
-          c *= 2;
-        }
-        if (e + eBias >= 1) {
-          value += rt / c;
-        } else {
-          value += rt * Math.pow(2, 1 - eBias);
-        }
-        if (value * c >= 2) {
-          e++;
-          c /= 2;
-        }
-        if (e + eBias >= eMax) {
-          m = 0;
-          e = eMax;
-        } else if (e + eBias >= 1) {
-          m = (value * c - 1) * Math.pow(2, mLen);
-          e = e + eBias;
-        } else {
-          m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen);
-          e = 0;
-        }
-      }
-      for (; mLen >= 8; buffer[offset + i] = m & 255, i += d, m /= 256, mLen -= 8) {
-      }
-      e = e << mLen | m;
-      eLen += mLen;
-      for (; eLen > 0; buffer[offset + i] = e & 255, i += d, e /= 256, eLen -= 8) {
-      }
-      buffer[offset + i - d] |= s * 128;
-    };
   }
 });
 
@@ -146515,9 +146432,9 @@ function generateBigIntFormatCheck(doc, def, accessor) {
   }
 }
 function generateMimeTypeCheck(doc, ctx, def, accessor) {
-  const mimeTypes2 = def.mime;
-  if (mimeTypes2 && mimeTypes2.length > 0) {
-    const mimeSet = addConstant(ctx, new Set(mimeTypes2));
+  const mimeTypes = def.mime;
+  if (mimeTypes && mimeTypes.length > 0) {
+    const mimeSet = addConstant(ctx, new Set(mimeTypes));
     doc.write(`if (!${mimeSet}.has(${accessor}.type)) return INVALID;`);
   }
 }
@@ -153475,8 +153392,8 @@ function validateCrit(Err, recognizedDefault, recognizedOption, protectedHeader,
   }
   return protectedHeader.crit;
 }
-function validateB64(protectedHeader, extensions2) {
-  if (extensions2.includes("b64")) {
+function validateB64(protectedHeader, extensions) {
+  if (extensions.includes("b64")) {
     const b64 = protectedHeader.b64;
     if (typeof b64 != "boolean")
       throw new JWSInvalid('The "b64" (base64url-encode payload) Header Parameter must be a boolean');
@@ -154513,3882 +154430,19 @@ import { randomUUID } from "node:crypto";
 import { lstat, mkdir, open as open2, realpath, rename, unlink } from "node:fs/promises";
 import { isAbsolute, relative, resolve, sep, win32, posix } from "node:path";
 import { fileURLToPath } from "node:url";
-
-// node_modules/token-types/lib/index.js
-var ieee754 = __toESM(require_ieee754(), 1);
-
-// node_modules/@borewit/text-codec/lib/index.js
-var WINDOWS_1252_EXTRA = {
-  128: "\u20AC",
-  130: "\u201A",
-  131: "\u0192",
-  132: "\u201E",
-  133: "\u2026",
-  134: "\u2020",
-  135: "\u2021",
-  136: "\u02C6",
-  137: "\u2030",
-  138: "\u0160",
-  139: "\u2039",
-  140: "\u0152",
-  142: "\u017D",
-  145: "\u2018",
-  146: "\u2019",
-  147: "\u201C",
-  148: "\u201D",
-  149: "\u2022",
-  150: "\u2013",
-  151: "\u2014",
-  152: "\u02DC",
-  153: "\u2122",
-  154: "\u0161",
-  155: "\u203A",
-  156: "\u0153",
-  158: "\u017E",
-  159: "\u0178"
-};
-var WINDOWS_1252_REVERSE = {};
-for (const [code, char] of Object.entries(WINDOWS_1252_EXTRA)) {
-  WINDOWS_1252_REVERSE[char] = Number.parseInt(code, 10);
-}
-var _utf8Decoder;
-function utf8Decoder() {
-  if (typeof globalThis.TextDecoder === "undefined")
-    return void 0;
-  return _utf8Decoder !== null && _utf8Decoder !== void 0 ? _utf8Decoder : _utf8Decoder = new globalThis.TextDecoder("utf-8");
-}
-var CHUNK = 32 * 1024;
-var REPLACEMENT = 65533;
-function textDecode(bytes, encoding = "utf-8") {
-  switch (encoding.toLowerCase()) {
-    case "utf-8":
-    case "utf8": {
-      const dec = utf8Decoder();
-      return dec ? dec.decode(bytes) : decodeUTF8(bytes);
-    }
-    case "utf-16le":
-      return decodeUTF16LE(bytes);
-    case "us-ascii":
-    case "ascii":
-      return decodeASCII(bytes);
-    case "latin1":
-    case "iso-8859-1":
-      return decodeLatin1(bytes);
-    case "windows-1252":
-      return decodeWindows1252(bytes);
-    default:
-      throw new RangeError(`Encoding '${encoding}' not supported`);
-  }
-}
-function flushChunk(parts, chunk) {
-  if (chunk.length === 0)
-    return;
-  parts.push(String.fromCharCode.apply(null, chunk));
-  chunk.length = 0;
-}
-function pushCodeUnit(parts, chunk, codeUnit) {
-  chunk.push(codeUnit);
-  if (chunk.length >= CHUNK)
-    flushChunk(parts, chunk);
-}
-function pushCodePoint(parts, chunk, cp) {
-  if (cp <= 65535) {
-    pushCodeUnit(parts, chunk, cp);
-    return;
-  }
-  cp -= 65536;
-  pushCodeUnit(parts, chunk, 55296 + (cp >> 10));
-  pushCodeUnit(parts, chunk, 56320 + (cp & 1023));
-}
-function decodeUTF8(bytes) {
-  const parts = [];
-  const chunk = [];
-  let i = 0;
-  if (bytes.length >= 3 && bytes[0] === 239 && bytes[1] === 187 && bytes[2] === 191) {
-    i = 3;
-  }
-  while (i < bytes.length) {
-    const b1 = bytes[i];
-    if (b1 <= 127) {
-      pushCodeUnit(parts, chunk, b1);
-      i++;
-      continue;
-    }
-    if (b1 < 194 || b1 > 244) {
-      pushCodeUnit(parts, chunk, REPLACEMENT);
-      i++;
-      continue;
-    }
-    if (b1 <= 223) {
-      if (i + 1 >= bytes.length) {
-        pushCodeUnit(parts, chunk, REPLACEMENT);
-        i++;
-        continue;
-      }
-      const b22 = bytes[i + 1];
-      if ((b22 & 192) !== 128) {
-        pushCodeUnit(parts, chunk, REPLACEMENT);
-        i++;
-        continue;
-      }
-      const cp2 = (b1 & 31) << 6 | b22 & 63;
-      pushCodeUnit(parts, chunk, cp2);
-      i += 2;
-      continue;
-    }
-    if (b1 <= 239) {
-      if (i + 2 >= bytes.length) {
-        pushCodeUnit(parts, chunk, REPLACEMENT);
-        i++;
-        continue;
-      }
-      const b22 = bytes[i + 1];
-      const b32 = bytes[i + 2];
-      const valid2 = (b22 & 192) === 128 && (b32 & 192) === 128 && !(b1 === 224 && b22 < 160) && // overlong
-      !(b1 === 237 && b22 >= 160);
-      if (!valid2) {
-        pushCodeUnit(parts, chunk, REPLACEMENT);
-        i++;
-        continue;
-      }
-      const cp2 = (b1 & 15) << 12 | (b22 & 63) << 6 | b32 & 63;
-      pushCodeUnit(parts, chunk, cp2);
-      i += 3;
-      continue;
-    }
-    if (i + 3 >= bytes.length) {
-      pushCodeUnit(parts, chunk, REPLACEMENT);
-      i++;
-      continue;
-    }
-    const b2 = bytes[i + 1];
-    const b3 = bytes[i + 2];
-    const b4 = bytes[i + 3];
-    const valid = (b2 & 192) === 128 && (b3 & 192) === 128 && (b4 & 192) === 128 && !(b1 === 240 && b2 < 144) && // overlong
-    !(b1 === 244 && b2 > 143);
-    if (!valid) {
-      pushCodeUnit(parts, chunk, REPLACEMENT);
-      i++;
-      continue;
-    }
-    const cp = (b1 & 7) << 18 | (b2 & 63) << 12 | (b3 & 63) << 6 | b4 & 63;
-    pushCodePoint(parts, chunk, cp);
-    i += 4;
-  }
-  flushChunk(parts, chunk);
-  return parts.join("");
-}
-function decodeUTF16LE(bytes) {
-  const parts = [];
-  const chunk = [];
-  const len = bytes.length;
-  let i = 0;
-  while (i + 1 < len) {
-    const u1 = bytes[i] | bytes[i + 1] << 8;
-    i += 2;
-    if (u1 >= 55296 && u1 <= 56319) {
-      if (i + 1 < len) {
-        const u2 = bytes[i] | bytes[i + 1] << 8;
-        if (u2 >= 56320 && u2 <= 57343) {
-          pushCodeUnit(parts, chunk, u1);
-          pushCodeUnit(parts, chunk, u2);
-          i += 2;
-        } else {
-          pushCodeUnit(parts, chunk, REPLACEMENT);
-        }
-      } else {
-        pushCodeUnit(parts, chunk, REPLACEMENT);
-      }
-      continue;
-    }
-    if (u1 >= 56320 && u1 <= 57343) {
-      pushCodeUnit(parts, chunk, REPLACEMENT);
-      continue;
-    }
-    pushCodeUnit(parts, chunk, u1);
-  }
-  if (i < len) {
-    pushCodeUnit(parts, chunk, REPLACEMENT);
-  }
-  flushChunk(parts, chunk);
-  return parts.join("");
-}
-function decodeASCII(bytes) {
-  const parts = [];
-  for (let i = 0; i < bytes.length; i += CHUNK) {
-    const end = Math.min(bytes.length, i + CHUNK);
-    const codes = new Array(end - i);
-    for (let j = i, k = 0; j < end; j++, k++) {
-      codes[k] = bytes[j] & 127;
-    }
-    parts.push(String.fromCharCode.apply(null, codes));
-  }
-  return parts.join("");
-}
-function decodeLatin1(bytes) {
-  const parts = [];
-  for (let i = 0; i < bytes.length; i += CHUNK) {
-    const end = Math.min(bytes.length, i + CHUNK);
-    const codes = new Array(end - i);
-    for (let j = i, k = 0; j < end; j++, k++) {
-      codes[k] = bytes[j];
-    }
-    parts.push(String.fromCharCode.apply(null, codes));
-  }
-  return parts.join("");
-}
-function decodeWindows1252(bytes) {
-  const parts = [];
-  let out = "";
-  for (let i = 0; i < bytes.length; i++) {
-    const b = bytes[i];
-    const extra = b >= 128 && b <= 159 ? WINDOWS_1252_EXTRA[b] : void 0;
-    out += extra !== null && extra !== void 0 ? extra : String.fromCharCode(b);
-    if (out.length >= CHUNK) {
-      parts.push(out);
-      out = "";
-    }
-  }
-  if (out)
-    parts.push(out);
-  return parts.join("");
-}
-
-// node_modules/token-types/lib/index.js
-function dv(array2) {
-  return new DataView(array2.buffer, array2.byteOffset);
-}
-var UINT8 = {
-  len: 1,
-  get(array2, offset) {
-    return dv(array2).getUint8(offset);
-  },
-  put(array2, offset, value) {
-    dv(array2).setUint8(offset, value);
-    return offset + 1;
-  }
-};
-var UINT16_LE = {
-  len: 2,
-  get(array2, offset) {
-    return dv(array2).getUint16(offset, true);
-  },
-  put(array2, offset, value) {
-    dv(array2).setUint16(offset, value, true);
-    return offset + 2;
-  }
-};
-var UINT16_BE = {
-  len: 2,
-  get(array2, offset) {
-    return dv(array2).getUint16(offset);
-  },
-  put(array2, offset, value) {
-    dv(array2).setUint16(offset, value);
-    return offset + 2;
-  }
-};
-var UINT32_LE = {
-  len: 4,
-  get(array2, offset) {
-    return dv(array2).getUint32(offset, true);
-  },
-  put(array2, offset, value) {
-    dv(array2).setUint32(offset, value, true);
-    return offset + 4;
-  }
-};
-var UINT32_BE = {
-  len: 4,
-  get(array2, offset) {
-    return dv(array2).getUint32(offset);
-  },
-  put(array2, offset, value) {
-    dv(array2).setUint32(offset, value);
-    return offset + 4;
-  }
-};
-var INT32_BE = {
-  len: 4,
-  get(array2, offset) {
-    return dv(array2).getInt32(offset);
-  },
-  put(array2, offset, value) {
-    dv(array2).setInt32(offset, value);
-    return offset + 4;
-  }
-};
-var UINT64_LE = {
-  len: 8,
-  get(array2, offset) {
-    return dv(array2).getBigUint64(offset, true);
-  },
-  put(array2, offset, value) {
-    dv(array2).setBigUint64(offset, value, true);
-    return offset + 8;
-  }
-};
-var StringType = class {
-  constructor(len, encoding) {
-    this.len = len;
-    this.encoding = encoding;
-  }
-  get(data, offset = 0) {
-    const bytes = data.subarray(offset, offset + this.len);
-    return textDecode(bytes, this.encoding);
-  }
-};
-
-// node_modules/strtok3/lib/stream/Errors.js
-var defaultMessages = "End-Of-Stream";
-var EndOfStreamError = class extends Error {
-  constructor() {
-    super(defaultMessages);
-    this.name = "EndOfStreamError";
-  }
-};
-var AbortError = class extends Error {
-  constructor(message2 = "The operation was aborted") {
-    super(message2);
-    this.name = "AbortError";
-  }
-};
-
-// node_modules/strtok3/lib/stream/AbstractStreamReader.js
-var AbstractStreamReader = class {
-  constructor() {
-    this.endOfStream = false;
-    this.interrupted = false;
-    this.peekQueue = [];
-  }
-  async peek(uint8Array, mayBeLess = false) {
-    const bytesRead = await this.read(uint8Array, mayBeLess);
-    this.peekQueue.push(uint8Array.subarray(0, bytesRead));
-    return bytesRead;
-  }
-  async read(buffer, mayBeLess = false) {
-    if (buffer.length === 0) {
-      return 0;
-    }
-    let bytesRead = this.readFromPeekBuffer(buffer);
-    if (!this.endOfStream) {
-      bytesRead += await this.readRemainderFromStream(buffer.subarray(bytesRead), mayBeLess);
-    }
-    if (bytesRead === 0 && !mayBeLess) {
-      throw new EndOfStreamError();
-    }
-    return bytesRead;
-  }
-  /**
-   * Read chunk from stream
-   * @param buffer - Target Uint8Array (or Buffer) to store data read from stream in
-   * @returns Number of bytes read
-   */
-  readFromPeekBuffer(buffer) {
-    let remaining = buffer.length;
-    let bytesRead = 0;
-    while (this.peekQueue.length > 0 && remaining > 0) {
-      const peekData = this.peekQueue.pop();
-      if (!peekData)
-        throw new Error("peekData should be defined");
-      const lenCopy = Math.min(peekData.length, remaining);
-      buffer.set(peekData.subarray(0, lenCopy), bytesRead);
-      bytesRead += lenCopy;
-      remaining -= lenCopy;
-      if (lenCopy < peekData.length) {
-        this.peekQueue.push(peekData.subarray(lenCopy));
-      }
-    }
-    return bytesRead;
-  }
-  async readRemainderFromStream(buffer, mayBeLess) {
-    let bytesRead = 0;
-    while (bytesRead < buffer.length && !this.endOfStream) {
-      if (this.interrupted) {
-        throw new AbortError();
-      }
-      const chunkLen = await this.readFromStream(buffer.subarray(bytesRead), mayBeLess);
-      if (chunkLen === 0)
-        break;
-      bytesRead += chunkLen;
-    }
-    if (!mayBeLess && bytesRead < buffer.length) {
-      throw new EndOfStreamError();
-    }
-    return bytesRead;
-  }
-};
-
-// node_modules/strtok3/lib/stream/WebStreamReader.js
-var WebStreamReader = class extends AbstractStreamReader {
-  constructor(reader) {
-    super();
-    this.reader = reader;
-  }
-  async abort() {
-    return this.close();
-  }
-  async close() {
-    this.reader.releaseLock();
-  }
-};
-
-// node_modules/strtok3/lib/stream/WebStreamByobReader.js
-var WebStreamByobReader = class extends WebStreamReader {
-  /**
-   * Read from stream
-   * @param buffer - Target Uint8Array (or Buffer) to store data read from stream in
-   * @param mayBeLess - If true, may fill the buffer partially
-   * @protected Bytes read
-   */
-  async readFromStream(buffer, mayBeLess) {
-    if (buffer.length === 0)
-      return 0;
-    const result = await this.reader.read(new Uint8Array(buffer.length), { min: mayBeLess ? void 0 : buffer.length });
-    if (result.done) {
-      this.endOfStream = result.done;
-    }
-    if (result.value) {
-      buffer.set(result.value);
-      return result.value.length;
-    }
-    return 0;
-  }
-};
-
-// node_modules/strtok3/lib/stream/WebStreamDefaultReader.js
-var WebStreamDefaultReader = class extends AbstractStreamReader {
-  constructor(reader) {
-    super();
-    this.reader = reader;
-    this.buffer = null;
-  }
-  /**
-   * Copy chunk to target, and store the remainder in this.buffer
-   */
-  writeChunk(target, chunk) {
-    const written = Math.min(chunk.length, target.length);
-    target.set(chunk.subarray(0, written));
-    if (written < chunk.length) {
-      this.buffer = chunk.subarray(written);
-    } else {
-      this.buffer = null;
-    }
-    return written;
-  }
-  /**
-   * Read from stream
-   * @param buffer - Target Uint8Array (or Buffer) to store data read from stream in
-   * @param mayBeLess - If true, may fill the buffer partially
-   * @protected Bytes read
-   */
-  async readFromStream(buffer, mayBeLess) {
-    if (buffer.length === 0)
-      return 0;
-    let totalBytesRead = 0;
-    if (this.buffer) {
-      totalBytesRead += this.writeChunk(buffer, this.buffer);
-    }
-    while (totalBytesRead < buffer.length && !this.endOfStream) {
-      const result = await this.reader.read();
-      if (result.done) {
-        this.endOfStream = true;
-        break;
-      }
-      if (result.value) {
-        totalBytesRead += this.writeChunk(buffer.subarray(totalBytesRead), result.value);
-      }
-    }
-    if (!mayBeLess && totalBytesRead === 0 && this.endOfStream) {
-      throw new EndOfStreamError();
-    }
-    return totalBytesRead;
-  }
-  abort() {
-    this.interrupted = true;
-    return this.reader.cancel();
-  }
-  async close() {
-    await this.abort();
-    this.reader.releaseLock();
-  }
-};
-
-// node_modules/strtok3/lib/stream/WebStreamReaderFactory.js
-function makeWebStreamReader(stream) {
+async function detectMimeType(filePath) {
+  const buf = Buffer.alloc(8);
+  const handle = await open2(filePath, "r");
   try {
-    const reader = stream.getReader({ mode: "byob" });
-    if (reader instanceof ReadableStreamDefaultReader) {
-      return new WebStreamDefaultReader(reader);
-    }
-    return new WebStreamByobReader(reader);
-  } catch (error62) {
-    if (error62 instanceof TypeError) {
-      return new WebStreamDefaultReader(stream.getReader());
-    }
-    throw error62;
-  }
-}
-
-// node_modules/strtok3/lib/AbstractTokenizer.js
-var AbstractTokenizer = class {
-  /**
-   * Constructor
-   * @param options Tokenizer options
-   * @protected
-   */
-  constructor(options) {
-    this.numBuffer = new Uint8Array(8);
-    this.position = 0;
-    this.onClose = options?.onClose;
-    if (options?.abortSignal) {
-      options.abortSignal.addEventListener("abort", () => {
-        this.abort();
-      });
-    }
-  }
-  /**
-   * Read a token from the tokenizer-stream
-   * @param token - The token to read
-   * @param position - If provided, the desired position in the tokenizer-stream
-   * @returns Promise with token data
-   */
-  async readToken(token, position = this.position) {
-    const uint8Array = new Uint8Array(token.len);
-    const len = await this.readBuffer(uint8Array, { position });
-    if (len < token.len)
-      throw new EndOfStreamError();
-    return token.get(uint8Array, 0);
-  }
-  /**
-   * Peek a token from the tokenizer-stream.
-   * @param token - Token to peek from the tokenizer-stream.
-   * @param position - Offset where to begin reading within the file. If position is null, data will be read from the current file position.
-   * @returns Promise with token data
-   */
-  async peekToken(token, position = this.position) {
-    const uint8Array = new Uint8Array(token.len);
-    const len = await this.peekBuffer(uint8Array, { position });
-    if (len < token.len)
-      throw new EndOfStreamError();
-    return token.get(uint8Array, 0);
-  }
-  /**
-   * Read a numeric token from the stream
-   * @param token - Numeric token
-   * @returns Promise with number
-   */
-  async readNumber(token) {
-    const len = await this.readBuffer(this.numBuffer, { length: token.len });
-    if (len < token.len)
-      throw new EndOfStreamError();
-    return token.get(this.numBuffer, 0);
-  }
-  /**
-   * Read a numeric token from the stream
-   * @param token - Numeric token
-   * @returns Promise with number
-   */
-  async peekNumber(token) {
-    const len = await this.peekBuffer(this.numBuffer, { length: token.len });
-    if (len < token.len)
-      throw new EndOfStreamError();
-    return token.get(this.numBuffer, 0);
-  }
-  /**
-   * Ignore number of bytes, advances the pointer in under tokenizer-stream.
-   * @param length - Number of bytes to ignore.  Must be ≥ 0.
-   * @return resolves the number of bytes ignored, equals length if this available, otherwise the number of bytes available
-   */
-  async ignore(length) {
-    if (length < 0) {
-      throw new RangeError("ignore length must be \u2265 0 bytes");
-    }
-    if (this.fileInfo.size !== void 0) {
-      const bytesLeft = this.fileInfo.size - this.position;
-      if (length > bytesLeft) {
-        this.position += bytesLeft;
-        return bytesLeft;
-      }
-    }
-    this.position += length;
-    return length;
-  }
-  async close() {
-    await this.abort();
-    await this.onClose?.();
-  }
-  normalizeOptions(uint8Array, options) {
-    if (!this.supportsRandomAccess() && options && options.position !== void 0 && options.position < this.position) {
-      throw new Error("`options.position` must be equal or greater than `tokenizer.position`");
-    }
-    return {
-      ...{
-        mayBeLess: false,
-        offset: 0,
-        length: uint8Array.length,
-        position: this.position
-      },
-      ...options
-    };
-  }
-  abort() {
-    return Promise.resolve();
-  }
-};
-
-// node_modules/strtok3/lib/ReadStreamTokenizer.js
-var maxBufferSize = 256e3;
-var ReadStreamTokenizer = class extends AbstractTokenizer {
-  /**
-   * Constructor
-   * @param streamReader stream-reader to read from
-   * @param options Tokenizer options
-   */
-  constructor(streamReader, options) {
-    super(options);
-    this.streamReader = streamReader;
-    this.fileInfo = options?.fileInfo ?? {};
-  }
-  /**
-   * Read buffer from tokenizer
-   * @param uint8Array - Target Uint8Array to fill with data read from the tokenizer-stream
-   * @param options - Read behaviour options
-   * @returns Promise with number of bytes read
-   */
-  async readBuffer(uint8Array, options) {
-    const normOptions = this.normalizeOptions(uint8Array, options);
-    const skipBytes = normOptions.position - this.position;
-    if (skipBytes > 0) {
-      await this.ignore(skipBytes);
-      return this.readBuffer(uint8Array, options);
-    }
-    if (skipBytes < 0) {
-      throw new Error("`options.position` must be equal or greater than `tokenizer.position`");
-    }
-    if (normOptions.length === 0) {
-      return 0;
-    }
-    const bytesRead = await this.streamReader.read(uint8Array.subarray(0, normOptions.length), normOptions.mayBeLess);
-    this.position += bytesRead;
-    if ((!options || !options.mayBeLess) && bytesRead < normOptions.length) {
-      throw new EndOfStreamError();
-    }
-    return bytesRead;
-  }
-  /**
-   * Peek (read ahead) buffer from tokenizer
-   * @param uint8Array - Uint8Array (or Buffer) to write data to
-   * @param options - Read behaviour options
-   * @returns Promise with number of bytes peeked
-   */
-  async peekBuffer(uint8Array, options) {
-    const normOptions = this.normalizeOptions(uint8Array, options);
-    let bytesRead = 0;
-    if (normOptions.position) {
-      const skipBytes = normOptions.position - this.position;
-      if (skipBytes > 0) {
-        const skipBuffer = new Uint8Array(normOptions.length + skipBytes);
-        bytesRead = await this.peekBuffer(skipBuffer, { mayBeLess: normOptions.mayBeLess });
-        uint8Array.set(skipBuffer.subarray(skipBytes));
-        return bytesRead - skipBytes;
-      }
-      if (skipBytes < 0) {
-        throw new Error("Cannot peek from a negative offset in a stream");
-      }
-    }
-    if (normOptions.length > 0) {
-      try {
-        bytesRead = await this.streamReader.peek(uint8Array.subarray(0, normOptions.length), normOptions.mayBeLess);
-      } catch (err) {
-        if (options?.mayBeLess && err instanceof EndOfStreamError) {
-          return 0;
-        }
-        throw err;
-      }
-      if (!normOptions.mayBeLess && bytesRead < normOptions.length) {
-        throw new EndOfStreamError();
-      }
-    }
-    return bytesRead;
-  }
-  /**
-   * @param length Number of bytes to ignore. Must be ≥ 0.
-   */
-  async ignore(length) {
-    if (length < 0) {
-      throw new RangeError("ignore length must be \u2265 0 bytes");
-    }
-    const bufSize = Math.min(maxBufferSize, length);
-    const buf = new Uint8Array(bufSize);
-    let totBytesRead = 0;
-    while (totBytesRead < length) {
-      const remaining = length - totBytesRead;
-      const bytesRead = await this.readBuffer(buf, { length: Math.min(bufSize, remaining) });
-      if (bytesRead < 0) {
-        return bytesRead;
-      }
-      totBytesRead += bytesRead;
-    }
-    return totBytesRead;
-  }
-  abort() {
-    return this.streamReader.abort();
-  }
-  async close() {
-    return this.streamReader.close();
-  }
-  supportsRandomAccess() {
-    return false;
-  }
-};
-
-// node_modules/strtok3/lib/BufferTokenizer.js
-var BufferTokenizer = class extends AbstractTokenizer {
-  /**
-   * Construct BufferTokenizer
-   * @param uint8Array - Uint8Array to tokenize
-   * @param options Tokenizer options
-   */
-  constructor(uint8Array, options) {
-    super(options);
-    this.uint8Array = uint8Array;
-    this.fileInfo = { ...options?.fileInfo ?? {}, ...{ size: uint8Array.length } };
-  }
-  /**
-   * Read buffer from tokenizer
-   * @param uint8Array - Uint8Array to tokenize
-   * @param options - Read behaviour options
-   * @returns {Promise<number>}
-   */
-  async readBuffer(uint8Array, options) {
-    if (options?.position) {
-      this.position = options.position;
-    }
-    const bytesRead = await this.peekBuffer(uint8Array, options);
-    this.position += bytesRead;
-    return bytesRead;
-  }
-  /**
-   * Peek (read ahead) buffer from tokenizer
-   * @param uint8Array
-   * @param options - Read behaviour options
-   * @returns {Promise<number>}
-   */
-  async peekBuffer(uint8Array, options) {
-    const normOptions = this.normalizeOptions(uint8Array, options);
-    const bytes2read = Math.min(this.uint8Array.length - normOptions.position, normOptions.length);
-    if (!normOptions.mayBeLess && bytes2read < normOptions.length) {
-      throw new EndOfStreamError();
-    }
-    uint8Array.set(this.uint8Array.subarray(normOptions.position, normOptions.position + bytes2read));
-    return bytes2read;
-  }
-  close() {
-    return super.close();
-  }
-  supportsRandomAccess() {
-    return true;
-  }
-  setPosition(position) {
-    this.position = position;
-  }
-};
-
-// node_modules/strtok3/lib/BlobTokenizer.js
-var BlobTokenizer = class extends AbstractTokenizer {
-  /**
-   * Construct BufferTokenizer
-   * @param blob - Uint8Array to tokenize
-   * @param options Tokenizer options
-   */
-  constructor(blob, options) {
-    super(options);
-    this.blob = blob;
-    this.fileInfo = { ...options?.fileInfo ?? {}, ...{ size: blob.size, mimeType: blob.type } };
-  }
-  /**
-   * Read buffer from tokenizer
-   * @param uint8Array - Uint8Array to tokenize
-   * @param options - Read behaviour options
-   * @returns {Promise<number>}
-   */
-  async readBuffer(uint8Array, options) {
-    if (options?.position) {
-      this.position = options.position;
-    }
-    const bytesRead = await this.peekBuffer(uint8Array, options);
-    this.position += bytesRead;
-    return bytesRead;
-  }
-  /**
-   * Peek (read ahead) buffer from tokenizer
-   * @param buffer
-   * @param options - Read behaviour options
-   * @returns {Promise<number>}
-   */
-  async peekBuffer(buffer, options) {
-    const normOptions = this.normalizeOptions(buffer, options);
-    const bytes2read = Math.min(this.blob.size - normOptions.position, normOptions.length);
-    if (!normOptions.mayBeLess && bytes2read < normOptions.length) {
-      throw new EndOfStreamError();
-    }
-    const arrayBuffer = await this.blob.slice(normOptions.position, normOptions.position + bytes2read).arrayBuffer();
-    buffer.set(new Uint8Array(arrayBuffer));
-    return bytes2read;
-  }
-  close() {
-    return super.close();
-  }
-  supportsRandomAccess() {
-    return true;
-  }
-  setPosition(position) {
-    this.position = position;
-  }
-};
-
-// node_modules/strtok3/lib/core.js
-function fromWebStream(webStream, options) {
-  const webStreamReader = makeWebStreamReader(webStream);
-  const _options = options ?? {};
-  const chainedClose = _options.onClose;
-  _options.onClose = async () => {
-    await webStreamReader.close();
-    if (chainedClose) {
-      return chainedClose();
-    }
-  };
-  return new ReadStreamTokenizer(webStreamReader, _options);
-}
-function fromBuffer(uint8Array, options) {
-  return new BufferTokenizer(uint8Array, options);
-}
-function fromBlob(blob, options) {
-  return new BlobTokenizer(blob, options);
-}
-
-// node_modules/@tokenizer/inflate/lib/ZipHandler.js
-var import_debug = __toESM(require_src(), 1);
-
-// node_modules/@tokenizer/inflate/lib/ZipToken.js
-var Signature = {
-  LocalFileHeader: 67324752,
-  DataDescriptor: 134695760,
-  CentralFileHeader: 33639248,
-  EndOfCentralDirectory: 101010256
-};
-var DataDescriptor = {
-  get(array2) {
-    return {
-      signature: UINT32_LE.get(array2, 0),
-      compressedSize: UINT32_LE.get(array2, 8),
-      uncompressedSize: UINT32_LE.get(array2, 12)
-    };
-  },
-  len: 16
-};
-var LocalFileHeaderToken = {
-  get(array2) {
-    const flags = UINT16_LE.get(array2, 6);
-    return {
-      signature: UINT32_LE.get(array2, 0),
-      minVersion: UINT16_LE.get(array2, 4),
-      dataDescriptor: !!(flags & 8),
-      compressedMethod: UINT16_LE.get(array2, 8),
-      compressedSize: UINT32_LE.get(array2, 18),
-      uncompressedSize: UINT32_LE.get(array2, 22),
-      filenameLength: UINT16_LE.get(array2, 26),
-      extraFieldLength: UINT16_LE.get(array2, 28),
-      filename: null
-    };
-  },
-  len: 30
-};
-var EndOfCentralDirectoryRecordToken = {
-  get(array2) {
-    return {
-      signature: UINT32_LE.get(array2, 0),
-      nrOfThisDisk: UINT16_LE.get(array2, 4),
-      nrOfThisDiskWithTheStart: UINT16_LE.get(array2, 6),
-      nrOfEntriesOnThisDisk: UINT16_LE.get(array2, 8),
-      nrOfEntriesOfSize: UINT16_LE.get(array2, 10),
-      sizeOfCd: UINT32_LE.get(array2, 12),
-      offsetOfStartOfCd: UINT32_LE.get(array2, 16),
-      zipFileCommentLength: UINT16_LE.get(array2, 20)
-    };
-  },
-  len: 22
-};
-var FileHeader = {
-  get(array2) {
-    const flags = UINT16_LE.get(array2, 8);
-    return {
-      signature: UINT32_LE.get(array2, 0),
-      minVersion: UINT16_LE.get(array2, 6),
-      dataDescriptor: !!(flags & 8),
-      compressedMethod: UINT16_LE.get(array2, 10),
-      compressedSize: UINT32_LE.get(array2, 20),
-      uncompressedSize: UINT32_LE.get(array2, 24),
-      filenameLength: UINT16_LE.get(array2, 28),
-      extraFieldLength: UINT16_LE.get(array2, 30),
-      fileCommentLength: UINT16_LE.get(array2, 32),
-      relativeOffsetOfLocalHeader: UINT32_LE.get(array2, 42),
-      filename: null
-    };
-  },
-  len: 46
-};
-
-// node_modules/@tokenizer/inflate/lib/ZipHandler.js
-function signatureToArray(signature) {
-  const signatureBytes = new Uint8Array(UINT32_LE.len);
-  UINT32_LE.put(signatureBytes, 0, signature);
-  return signatureBytes;
-}
-var debug = (0, import_debug.default)("tokenizer:inflate");
-var syncBufferSize = 256 * 1024;
-var ddSignatureArray = signatureToArray(Signature.DataDescriptor);
-var eocdSignatureBytes = signatureToArray(Signature.EndOfCentralDirectory);
-var ZipHandler = class _ZipHandler {
-  constructor(tokenizer) {
-    this.tokenizer = tokenizer;
-    this.syncBuffer = new Uint8Array(syncBufferSize);
-  }
-  async isZip() {
-    return await this.peekSignature() === Signature.LocalFileHeader;
-  }
-  peekSignature() {
-    return this.tokenizer.peekToken(UINT32_LE);
-  }
-  async findEndOfCentralDirectoryLocator() {
-    const randomReadTokenizer = this.tokenizer;
-    const chunkLength = Math.min(16 * 1024, randomReadTokenizer.fileInfo.size);
-    const buffer = this.syncBuffer.subarray(0, chunkLength);
-    await this.tokenizer.readBuffer(buffer, { position: randomReadTokenizer.fileInfo.size - chunkLength });
-    for (let i = buffer.length - 4; i >= 0; i--) {
-      if (buffer[i] === eocdSignatureBytes[0] && buffer[i + 1] === eocdSignatureBytes[1] && buffer[i + 2] === eocdSignatureBytes[2] && buffer[i + 3] === eocdSignatureBytes[3]) {
-        return randomReadTokenizer.fileInfo.size - chunkLength + i;
-      }
-    }
-    return -1;
-  }
-  async readCentralDirectory() {
-    if (!this.tokenizer.supportsRandomAccess()) {
-      debug("Cannot reading central-directory without random-read support");
-      return;
-    }
-    debug("Reading central-directory...");
-    const pos = this.tokenizer.position;
-    const offset = await this.findEndOfCentralDirectoryLocator();
-    if (offset > 0) {
-      debug("Central-directory 32-bit signature found");
-      const eocdHeader = await this.tokenizer.readToken(EndOfCentralDirectoryRecordToken, offset);
-      const files = [];
-      this.tokenizer.setPosition(eocdHeader.offsetOfStartOfCd);
-      for (let n = 0; n < eocdHeader.nrOfEntriesOfSize; ++n) {
-        const entry = await this.tokenizer.readToken(FileHeader);
-        if (entry.signature !== Signature.CentralFileHeader) {
-          throw new Error("Expected Central-File-Header signature");
-        }
-        entry.filename = await this.tokenizer.readToken(new StringType(entry.filenameLength, "utf-8"));
-        await this.tokenizer.ignore(entry.extraFieldLength);
-        await this.tokenizer.ignore(entry.fileCommentLength);
-        files.push(entry);
-        debug(`Add central-directory file-entry: n=${n + 1}/${files.length}: filename=${files[n].filename}`);
-      }
-      this.tokenizer.setPosition(pos);
-      return files;
-    }
-    this.tokenizer.setPosition(pos);
-  }
-  async unzip(fileCb) {
-    const entries = await this.readCentralDirectory();
-    if (entries) {
-      return this.iterateOverCentralDirectory(entries, fileCb);
-    }
-    let stop = false;
-    do {
-      const zipHeader = await this.readLocalFileHeader();
-      if (!zipHeader)
-        break;
-      const next = fileCb(zipHeader);
-      stop = !!next.stop;
-      let fileData;
-      await this.tokenizer.ignore(zipHeader.extraFieldLength);
-      if (zipHeader.dataDescriptor && zipHeader.compressedSize === 0) {
-        const chunks = [];
-        let len = syncBufferSize;
-        debug("Compressed-file-size unknown, scanning for next data-descriptor-signature....");
-        let nextHeaderIndex = -1;
-        while (nextHeaderIndex < 0 && len === syncBufferSize) {
-          len = await this.tokenizer.peekBuffer(this.syncBuffer, { mayBeLess: true });
-          nextHeaderIndex = indexOf(this.syncBuffer.subarray(0, len), ddSignatureArray);
-          const size = nextHeaderIndex >= 0 ? nextHeaderIndex : len;
-          if (next.handler) {
-            const data = new Uint8Array(size);
-            await this.tokenizer.readBuffer(data);
-            chunks.push(data);
-          } else {
-            await this.tokenizer.ignore(size);
-          }
-        }
-        debug(`Found data-descriptor-signature at pos=${this.tokenizer.position}`);
-        if (next.handler) {
-          await this.inflate(zipHeader, mergeArrays(chunks), next.handler);
-        }
-      } else {
-        if (next.handler) {
-          debug(`Reading compressed-file-data: ${zipHeader.compressedSize} bytes`);
-          fileData = new Uint8Array(zipHeader.compressedSize);
-          await this.tokenizer.readBuffer(fileData);
-          await this.inflate(zipHeader, fileData, next.handler);
-        } else {
-          debug(`Ignoring compressed-file-data: ${zipHeader.compressedSize} bytes`);
-          await this.tokenizer.ignore(zipHeader.compressedSize);
-        }
-      }
-      debug(`Reading data-descriptor at pos=${this.tokenizer.position}`);
-      if (zipHeader.dataDescriptor) {
-        const dataDescriptor = await this.tokenizer.readToken(DataDescriptor);
-        if (dataDescriptor.signature !== 134695760) {
-          throw new Error(`Expected data-descriptor-signature at position ${this.tokenizer.position - DataDescriptor.len}`);
-        }
-      }
-    } while (!stop);
-  }
-  async iterateOverCentralDirectory(entries, fileCb) {
-    for (const fileHeader of entries) {
-      const next = fileCb(fileHeader);
-      if (next.handler) {
-        this.tokenizer.setPosition(fileHeader.relativeOffsetOfLocalHeader);
-        const zipHeader = await this.readLocalFileHeader();
-        if (zipHeader) {
-          await this.tokenizer.ignore(zipHeader.extraFieldLength);
-          const fileData = new Uint8Array(fileHeader.compressedSize);
-          await this.tokenizer.readBuffer(fileData);
-          await this.inflate(zipHeader, fileData, next.handler);
-        }
-      }
-      if (next.stop)
-        break;
-    }
-  }
-  async inflate(zipHeader, fileData, cb) {
-    if (zipHeader.compressedMethod === 0) {
-      return cb(fileData);
-    }
-    if (zipHeader.compressedMethod !== 8) {
-      throw new Error(`Unsupported ZIP compression method: ${zipHeader.compressedMethod}`);
-    }
-    debug(`Decompress filename=${zipHeader.filename}, compressed-size=${fileData.length}`);
-    const uncompressedData = await _ZipHandler.decompressDeflateRaw(fileData);
-    return cb(uncompressedData);
-  }
-  static async decompressDeflateRaw(data) {
-    const input2 = new ReadableStream({
-      start(controller) {
-        controller.enqueue(data);
-        controller.close();
-      }
-    });
-    const ds = new DecompressionStream("deflate-raw");
-    const output2 = input2.pipeThrough(ds);
-    try {
-      const response = new Response(output2);
-      const buffer = await response.arrayBuffer();
-      return new Uint8Array(buffer);
-    } catch (err) {
-      const message2 = err instanceof Error ? `Failed to deflate ZIP entry: ${err.message}` : "Unknown decompression error in ZIP entry";
-      throw new TypeError(message2);
-    }
-  }
-  async readLocalFileHeader() {
-    const signature = await this.tokenizer.peekToken(UINT32_LE);
-    if (signature === Signature.LocalFileHeader) {
-      const header = await this.tokenizer.readToken(LocalFileHeaderToken);
-      header.filename = await this.tokenizer.readToken(new StringType(header.filenameLength, "utf-8"));
-      return header;
-    }
-    if (signature === Signature.CentralFileHeader) {
-      return false;
-    }
-    if (signature === 3759263696) {
-      throw new Error("Encrypted ZIP");
-    }
-    throw new Error("Unexpected signature");
-  }
-};
-function indexOf(buffer, portion) {
-  const bufferLength = buffer.length;
-  const portionLength = portion.length;
-  if (portionLength > bufferLength)
-    return -1;
-  for (let i = 0; i <= bufferLength - portionLength; i++) {
-    let found = true;
-    for (let j = 0; j < portionLength; j++) {
-      if (buffer[i + j] !== portion[j]) {
-        found = false;
-        break;
-      }
-    }
-    if (found) {
-      return i;
-    }
-  }
-  return -1;
-}
-function mergeArrays(chunks) {
-  const totalLength = chunks.reduce((acc, curr) => acc + curr.length, 0);
-  const mergedArray = new Uint8Array(totalLength);
-  let offset = 0;
-  for (const chunk of chunks) {
-    mergedArray.set(chunk, offset);
-    offset += chunk.length;
-  }
-  return mergedArray;
-}
-
-// node_modules/@tokenizer/inflate/lib/GzipHandler.js
-var GzipHandler = class {
-  constructor(tokenizer) {
-    this.tokenizer = tokenizer;
-  }
-  inflate() {
-    const tokenizer = this.tokenizer;
-    return new ReadableStream({
-      async pull(controller) {
-        const buffer = new Uint8Array(1024);
-        const size = await tokenizer.readBuffer(buffer, { mayBeLess: true });
-        if (size === 0) {
-          controller.close();
-          return;
-        }
-        controller.enqueue(buffer.subarray(0, size));
-      }
-    }).pipeThrough(new DecompressionStream("gzip"));
-  }
-};
-
-// node_modules/uint8array-extras/index.js
-var objectToString = Object.prototype.toString;
-var uint8ArrayStringified = "[object Uint8Array]";
-function isType(value, typeConstructor, typeStringified) {
-  if (!value) {
-    return false;
-  }
-  if (value.constructor === typeConstructor) {
-    return true;
-  }
-  return objectToString.call(value) === typeStringified;
-}
-function isUint8Array(value) {
-  return isType(value, Uint8Array, uint8ArrayStringified);
-}
-function assertUint8Array(value) {
-  if (!isUint8Array(value)) {
-    throw new TypeError(`Expected \`Uint8Array\`, got \`${typeof value}\``);
-  }
-}
-function concatUint8Arrays(arrays, totalLength) {
-  if (arrays.length === 0) {
-    return new Uint8Array(0);
-  }
-  totalLength ??= arrays.reduce((accumulator, currentValue) => accumulator + currentValue.length, 0);
-  const returnValue = new Uint8Array(totalLength);
-  let offset = 0;
-  for (const array2 of arrays) {
-    assertUint8Array(array2);
-    returnValue.set(array2, offset);
-    offset += array2.length;
-  }
-  return returnValue;
-}
-var cachedDecoders = {
-  utf8: new globalThis.TextDecoder("utf8")
-};
-var cachedEncoder = new globalThis.TextEncoder();
-var byteToHexLookupTable = Array.from({ length: 256 }, (_, index) => index.toString(16).padStart(2, "0"));
-function getUintBE(view) {
-  const { byteLength } = view;
-  if (byteLength === 6) {
-    return view.getUint16(0) * 2 ** 32 + view.getUint32(2);
-  }
-  if (byteLength === 5) {
-    return view.getUint8(0) * 2 ** 32 + view.getUint32(1);
-  }
-  if (byteLength === 4) {
-    return view.getUint32(0);
-  }
-  if (byteLength === 3) {
-    return view.getUint8(0) * 2 ** 16 + view.getUint16(1);
-  }
-  if (byteLength === 2) {
-    return view.getUint16(0);
-  }
-  if (byteLength === 1) {
-    return view.getUint8(0);
-  }
-}
-
-// node_modules/file-type/source/tokens.js
-function stringToBytes(string4, encoding) {
-  if (encoding === "utf-16le") {
-    const bytes = [];
-    for (let index = 0; index < string4.length; index++) {
-      const code = string4.charCodeAt(index);
-      bytes.push(code & 255, code >> 8 & 255);
-    }
-    return bytes;
-  }
-  if (encoding === "utf-16be") {
-    const bytes = [];
-    for (let index = 0; index < string4.length; index++) {
-      const code = string4.charCodeAt(index);
-      bytes.push(code >> 8 & 255, code & 255);
-    }
-    return bytes;
-  }
-  return [...string4].map((character) => character.charCodeAt(0));
-}
-function tarHeaderChecksumMatches(arrayBuffer, offset = 0) {
-  const readSum = Number.parseInt(new StringType(6).get(arrayBuffer, 148).replace(new RegExp("\\0.*$", "v"), "").trim(), 8);
-  if (Number.isNaN(readSum)) {
-    return false;
-  }
-  let sum = 8 * 32;
-  for (let index = offset; index < offset + 148; index++) {
-    sum += arrayBuffer[index];
-  }
-  for (let index = offset + 156; index < offset + 512; index++) {
-    sum += arrayBuffer[index];
-  }
-  return readSum === sum;
-}
-var uint32SyncSafeToken = {
-  get: (buffer, offset) => buffer[offset + 3] & 127 | (buffer[offset + 2] & 127) << 7 | (buffer[offset + 1] & 127) << 14 | (buffer[offset] & 127) << 21,
-  len: 4
-};
-
-// node_modules/file-type/source/supported.js
-var extensions = [
-  "jpg",
-  "png",
-  "apng",
-  "gif",
-  "webp",
-  "flif",
-  "xcf",
-  "cr2",
-  "cr3",
-  "orf",
-  "arw",
-  "dng",
-  "nef",
-  "rw2",
-  "raf",
-  "tif",
-  "bmp",
-  "icns",
-  "jxr",
-  "psd",
-  "indd",
-  "zip",
-  "tar",
-  "rar",
-  "gz",
-  "bz2",
-  "7z",
-  "dmg",
-  "mp4",
-  "mid",
-  "mkv",
-  "webm",
-  "mov",
-  "avi",
-  "mpg",
-  "mp2",
-  "mp3",
-  "m4a",
-  "oga",
-  "ogg",
-  "ogv",
-  "opus",
-  "flac",
-  "wav",
-  "spx",
-  "amr",
-  "pdf",
-  "epub",
-  "elf",
-  "macho",
-  "exe",
-  "swf",
-  "rtf",
-  "wasm",
-  "woff",
-  "woff2",
-  "eot",
-  "ttf",
-  "otf",
-  "ttc",
-  "ico",
-  "flv",
-  "ps",
-  "xz",
-  "sqlite",
-  "nes",
-  "crx",
-  "xpi",
-  "cab",
-  "deb",
-  "ar",
-  "rpm",
-  "Z",
-  "lz",
-  "cfb",
-  "mxf",
-  "mts",
-  "blend",
-  "bpg",
-  "docx",
-  "pptx",
-  "xlsx",
-  "3gp",
-  "3g2",
-  "j2c",
-  "jp2",
-  "jpm",
-  "jpx",
-  "mj2",
-  "aif",
-  "qcp",
-  "odt",
-  "ods",
-  "odp",
-  "xml",
-  "mobi",
-  "heic",
-  "cur",
-  "ktx",
-  "ape",
-  "wv",
-  "dcm",
-  "ics",
-  "glb",
-  "pcap",
-  "dsf",
-  "lnk",
-  "alias",
-  "voc",
-  "ac3",
-  "m4v",
-  "m4p",
-  "m4b",
-  "f4v",
-  "f4p",
-  "f4b",
-  "f4a",
-  "mie",
-  "asf",
-  "ogm",
-  "ogx",
-  "mpc",
-  "arrow",
-  "shp",
-  "aac",
-  "mp1",
-  "it",
-  "s3m",
-  "xm",
-  "skp",
-  "avif",
-  "eps",
-  "lzh",
-  "pgp",
-  "asar",
-  "stl",
-  "chm",
-  "3mf",
-  "zst",
-  "jxl",
-  "vcf",
-  "jls",
-  "pst",
-  "dwg",
-  "parquet",
-  "class",
-  "arj",
-  "cpio",
-  "ace",
-  "avro",
-  "icc",
-  "fbx",
-  "vsdx",
-  "vtt",
-  "apk",
-  "drc",
-  "lz4",
-  "potx",
-  "xltx",
-  "dotx",
-  "xltm",
-  "ott",
-  "ots",
-  "otp",
-  "odg",
-  "otg",
-  "xlsm",
-  "docm",
-  "dotm",
-  "potm",
-  "pptm",
-  "jar",
-  "jmp",
-  "rm",
-  "sav",
-  "ppsm",
-  "ppsx",
-  "tar.gz",
-  "reg",
-  "dat",
-  "key",
-  "numbers",
-  "pages",
-  "iso"
-];
-var mimeTypes = [
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-  "image/flif",
-  "image/x-xcf",
-  "image/x-canon-cr2",
-  "image/x-canon-cr3",
-  "image/tiff",
-  "image/bmp",
-  "image/vnd.ms-photo",
-  "image/vnd.adobe.photoshop",
-  "application/x-indesign",
-  "application/epub+zip",
-  "application/x-xpinstall",
-  "application/vnd.ms-powerpoint.slideshow.macroenabled.12",
-  "application/vnd.oasis.opendocument.text",
-  "application/vnd.oasis.opendocument.spreadsheet",
-  "application/vnd.oasis.opendocument.presentation",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "application/vnd.openxmlformats-officedocument.presentationml.slideshow",
-  "application/zip",
-  "application/x-tar",
-  "application/x-rar-compressed",
-  "application/gzip",
-  "application/x-bzip2",
-  "application/x-7z-compressed",
-  "application/x-apple-diskimage",
-  "application/vnd.apache.arrow.file",
-  "video/mp4",
-  "audio/midi",
-  "video/matroska",
-  "video/webm",
-  "video/quicktime",
-  "video/vnd.avi",
-  "audio/wav",
-  "audio/qcelp",
-  "audio/x-ms-asf",
-  "video/x-ms-asf",
-  "application/vnd.ms-asf",
-  "video/mpeg",
-  "video/3gpp",
-  "audio/mpeg",
-  "audio/mp4",
-  // RFC 4337
-  "video/ogg",
-  "audio/ogg",
-  "audio/ogg; codecs=opus",
-  "application/ogg",
-  "audio/flac",
-  "audio/ape",
-  "audio/wavpack",
-  "audio/amr",
-  "application/pdf",
-  "application/x-elf",
-  "application/x-mach-binary",
-  "application/x-msdownload",
-  "application/x-shockwave-flash",
-  "application/rtf",
-  "application/wasm",
-  "font/woff",
-  "font/woff2",
-  "application/vnd.ms-fontobject",
-  "font/ttf",
-  "font/otf",
-  "font/collection",
-  "image/x-icon",
-  "video/x-flv",
-  "application/postscript",
-  "application/eps",
-  "application/x-xz",
-  "application/x-sqlite3",
-  "application/x-nintendo-nes-rom",
-  "application/x-google-chrome-extension",
-  "application/vnd.ms-cab-compressed",
-  "application/x-deb",
-  "application/x-unix-archive",
-  "application/x-rpm",
-  "application/x-compress",
-  "application/lzip",
-  "application/x-cfb",
-  "application/x-mie",
-  "application/mxf",
-  "video/mp2t",
-  "application/x-blender",
-  "image/bpg",
-  "image/j2c",
-  "image/jp2",
-  "image/jpx",
-  "image/jpm",
-  "image/mj2",
-  "audio/aiff",
-  "application/xml",
-  "application/x-mobipocket-ebook",
-  "image/heif",
-  "image/heif-sequence",
-  "image/heic",
-  "image/heic-sequence",
-  "image/icns",
-  "image/ktx",
-  "application/dicom",
-  "audio/x-musepack",
-  "text/calendar",
-  "text/vcard",
-  "text/vtt",
-  "model/gltf-binary",
-  "application/vnd.tcpdump.pcap",
-  "audio/x-dsf",
-  // Non-standard
-  "application/x-ms-shortcut",
-  // Informal, used by freedesktop.org shared-mime-info
-  "application/x-ft-apple.alias",
-  "audio/x-voc",
-  "audio/vnd.dolby.dd-raw",
-  "audio/x-m4a",
-  "image/apng",
-  "image/x-olympus-orf",
-  "image/x-sony-arw",
-  "image/x-adobe-dng",
-  "image/x-nikon-nef",
-  "image/x-panasonic-rw2",
-  "image/x-fujifilm-raf",
-  "video/x-m4v",
-  "video/3gpp2",
-  "application/x-esri-shape",
-  "audio/aac",
-  "audio/x-it",
-  "audio/x-s3m",
-  "audio/x-xm",
-  "video/MP1S",
-  "video/MP2P",
-  "application/vnd.sketchup.skp",
-  "image/avif",
-  "application/x-lzh-compressed",
-  "application/pgp-encrypted",
-  "application/x-asar",
-  "model/stl",
-  "application/vnd.ms-htmlhelp",
-  "model/3mf",
-  "image/jxl",
-  "application/zstd",
-  "image/jls",
-  "application/vnd.ms-outlook",
-  "image/vnd.dwg",
-  "application/vnd.apache.parquet",
-  "application/java-vm",
-  "application/x-arj",
-  "application/x-cpio",
-  "application/x-ace-compressed",
-  "application/avro",
-  "application/vnd.iccprofile",
-  "application/x-ft-fbx",
-  "application/vnd.visio",
-  "application/vnd.android.package-archive",
-  "application/x-ft-draco",
-  "application/x-lz4",
-  // Informal, used by freedesktop.org shared-mime-info
-  "application/vnd.openxmlformats-officedocument.presentationml.template",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.template",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.template",
-  "application/vnd.ms-excel.template.macroenabled.12",
-  "application/vnd.oasis.opendocument.text-template",
-  "application/vnd.oasis.opendocument.spreadsheet-template",
-  "application/vnd.oasis.opendocument.presentation-template",
-  "application/vnd.oasis.opendocument.graphics",
-  "application/vnd.oasis.opendocument.graphics-template",
-  "application/vnd.ms-excel.sheet.macroenabled.12",
-  "application/vnd.ms-word.document.macroenabled.12",
-  "application/vnd.ms-word.template.macroenabled.12",
-  "application/vnd.ms-powerpoint.template.macroenabled.12",
-  "application/vnd.ms-powerpoint.presentation.macroenabled.12",
-  "application/java-archive",
-  "application/vnd.rn-realmedia",
-  "application/x-spss-sav",
-  "application/x-ms-regedit",
-  "application/x-ft-windows-registry-hive",
-  "application/x-jmp-data",
-  "application/vnd.apple.keynote",
-  "application/vnd.apple.numbers",
-  "application/vnd.apple.pages",
-  "application/x-iso9660-image"
-];
-
-// node_modules/file-type/source/parser.js
-var maximumUntrustedSkipSizeInBytes = 16 * 1024 * 1024;
-var ParserHardLimitError = class extends Error {
-};
-function getSafeBound(value, maximum, reason) {
-  if (!Number.isFinite(value) || value < 0 || value > maximum) {
-    throw new ParserHardLimitError(`${reason} has invalid size ${value} (maximum ${maximum} bytes)`);
-  }
-  return value;
-}
-async function safeIgnore(tokenizer, length, { maximumLength = maximumUntrustedSkipSizeInBytes, reason = "skip" } = {}) {
-  const safeLength = getSafeBound(length, maximumLength, reason);
-  await tokenizer.ignore(safeLength);
-}
-async function safeReadBuffer(tokenizer, buffer, options, { maximumLength = buffer.length, reason = "read" } = {}) {
-  const length = options?.length ?? buffer.length;
-  const safeLength = getSafeBound(length, maximumLength, reason);
-  return tokenizer.readBuffer(buffer, {
-    ...options,
-    length: safeLength
-  });
-}
-function checkBytes(buffer, headers, options) {
-  options = {
-    offset: 0,
-    ...options
-  };
-  for (const [index, header] of headers.entries()) {
-    if (options.mask) {
-      if (header !== (options.mask[index] & buffer[index + options.offset])) {
-        return false;
-      }
-    } else if (header !== buffer[index + options.offset]) {
-      return false;
-    }
-  }
-  return true;
-}
-function hasUnknownFileSize(tokenizer) {
-  const fileSize = tokenizer.fileInfo.size;
-  return !Number.isFinite(fileSize) || fileSize === Number.MAX_SAFE_INTEGER;
-}
-function hasExceededUnknownSizeScanBudget(tokenizer, startOffset, maximumBytes) {
-  return hasUnknownFileSize(tokenizer) && tokenizer.position - startOffset > maximumBytes;
-}
-
-// node_modules/file-type/source/detectors/zip.js
-var maximumZipEntrySizeInBytes = 1024 * 1024;
-var maximumZipEntryCount = 1024;
-var maximumZipBufferedReadSizeInBytes = 2 ** 31 - 1;
-var maximumZipTextEntrySizeInBytes = maximumZipEntrySizeInBytes;
-var recoverableZipErrorMessages = /* @__PURE__ */ new Set([
-  "Unexpected signature",
-  "Encrypted ZIP",
-  "Expected Central-File-Header signature"
-]);
-var recoverableZipErrorMessagePrefixes = [
-  "ZIP entry count exceeds ",
-  "Unsupported ZIP compression method:",
-  "ZIP entry compressed data exceeds ",
-  "ZIP entry decompressed data exceeds ",
-  "Expected data-descriptor-signature at position "
-];
-var recoverableZipErrorCodes = /* @__PURE__ */ new Set([
-  "Z_BUF_ERROR",
-  "Z_DATA_ERROR",
-  "ERR_INVALID_STATE"
-]);
-async function decompressDeflateRawWithLimit(data, { maximumLength = maximumZipEntrySizeInBytes } = {}) {
-  const input2 = new ReadableStream({
-    start(controller) {
-      controller.enqueue(data);
-      controller.close();
-    }
-  });
-  const output2 = input2.pipeThrough(new DecompressionStream("deflate-raw"));
-  const reader = output2.getReader();
-  const chunks = [];
-  let totalLength = 0;
-  try {
-    for (; ; ) {
-      const { done, value } = await reader.read();
-      if (done) {
-        break;
-      }
-      totalLength += value.length;
-      if (totalLength > maximumLength) {
-        await reader.cancel().catch(() => {
-        });
-        throw new Error(`ZIP entry decompressed data exceeds ${maximumLength} bytes`);
-      }
-      chunks.push(value);
-    }
-  } catch (error62) {
-    if (error62.code !== "ERR_TRAILING_JUNK_AFTER_STREAM_END") {
-      throw error62;
-    }
+    await handle.read(buf, 0, 8, 0);
   } finally {
-    reader.releaseLock();
+    await handle.close();
   }
-  const uncompressedData = new Uint8Array(totalLength);
-  let offset = 0;
-  for (const chunk of chunks) {
-    uncompressedData.set(chunk, offset);
-    offset += chunk.length;
-  }
-  return uncompressedData;
+  if (buf[0] === 137 && buf[1] === 80 && buf[2] === 78 && buf[3] === 71) return { mime: "image/png" };
+  if (buf[0] === 255 && buf[1] === 216 && buf[2] === 255) return { mime: "image/jpeg" };
+  if (buf[0] === 37 && buf[1] === 80 && buf[2] === 68 && buf[3] === 70) return { mime: "application/pdf" };
+  return void 0;
 }
-function mergeByteChunks(chunks, totalLength) {
-  const merged = new Uint8Array(totalLength);
-  let offset = 0;
-  for (const chunk of chunks) {
-    merged.set(chunk, offset);
-    offset += chunk.length;
-  }
-  return merged;
-}
-function getMaximumZipBufferedReadLength(tokenizer) {
-  const fileSize = tokenizer.fileInfo.size;
-  const remainingBytes = Number.isFinite(fileSize) ? Math.max(0, fileSize - tokenizer.position) : Number.MAX_SAFE_INTEGER;
-  return Math.min(remainingBytes, maximumZipBufferedReadSizeInBytes);
-}
-function isRecoverableZipError(error62) {
-  if (error62 instanceof EndOfStreamError) {
-    return true;
-  }
-  if (error62 instanceof ParserHardLimitError) {
-    return true;
-  }
-  if (!(error62 instanceof Error)) {
-    return false;
-  }
-  if (recoverableZipErrorMessages.has(error62.message)) {
-    return true;
-  }
-  if (recoverableZipErrorCodes.has(error62.code)) {
-    return true;
-  }
-  for (const prefix of recoverableZipErrorMessagePrefixes) {
-    if (error62.message.startsWith(prefix)) {
-      return true;
-    }
-  }
-  return false;
-}
-function canReadZipEntryForDetection(zipHeader, maximumSize = maximumZipEntrySizeInBytes) {
-  const sizes = [zipHeader.compressedSize, zipHeader.uncompressedSize];
-  for (const size of sizes) {
-    if (!Number.isFinite(size) || size < 0 || size > maximumSize) {
-      return false;
-    }
-  }
-  return true;
-}
-function createIWorkZipDetectionState() {
-  return {
-    hasDocumentEntry: false,
-    hasMasterSlideEntry: false,
-    hasTablesEntry: false,
-    hasCalculationEngineEntry: false
-  };
-}
-function updateIWorkZipDetectionStateFromFilename(iWorkState, filename) {
-  if (filename === "Index/Document.iwa") {
-    iWorkState.hasDocumentEntry = true;
-  }
-  if (filename.startsWith("Index/MasterSlide")) {
-    iWorkState.hasMasterSlideEntry = true;
-  }
-  if (filename.startsWith("Index/Tables/")) {
-    iWorkState.hasTablesEntry = true;
-  }
-  if (filename === "Index/CalculationEngine.iwa") {
-    iWorkState.hasCalculationEngineEntry = true;
-  }
-}
-function getIWorkFileTypeFromZipEntries(iWorkState) {
-  if (!iWorkState.hasDocumentEntry) {
-    return;
-  }
-  if (iWorkState.hasMasterSlideEntry) {
-    return { ext: "key", mime: "application/vnd.apple.keynote" };
-  }
-  if (iWorkState.hasTablesEntry) {
-    return { ext: "numbers", mime: "application/vnd.apple.numbers" };
-  }
-  return { ext: "pages", mime: "application/vnd.apple.pages" };
-}
-function getFileTypeFromMimeType(mimeType) {
-  mimeType = mimeType.toLowerCase();
-  switch (mimeType) {
-    case "application/epub+zip":
-      return { ext: "epub", mime: mimeType };
-    case "application/vnd.oasis.opendocument.text":
-      return { ext: "odt", mime: mimeType };
-    case "application/vnd.oasis.opendocument.text-template":
-      return { ext: "ott", mime: mimeType };
-    case "application/vnd.oasis.opendocument.spreadsheet":
-      return { ext: "ods", mime: mimeType };
-    case "application/vnd.oasis.opendocument.spreadsheet-template":
-      return { ext: "ots", mime: mimeType };
-    case "application/vnd.oasis.opendocument.presentation":
-      return { ext: "odp", mime: mimeType };
-    case "application/vnd.oasis.opendocument.presentation-template":
-      return { ext: "otp", mime: mimeType };
-    case "application/vnd.oasis.opendocument.graphics":
-      return { ext: "odg", mime: mimeType };
-    case "application/vnd.oasis.opendocument.graphics-template":
-      return { ext: "otg", mime: mimeType };
-    case "application/vnd.openxmlformats-officedocument.presentationml.slideshow":
-      return { ext: "ppsx", mime: mimeType };
-    case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
-      return { ext: "xlsx", mime: mimeType };
-    case "application/vnd.ms-excel.sheet.macroenabled":
-      return { ext: "xlsm", mime: "application/vnd.ms-excel.sheet.macroenabled.12" };
-    case "application/vnd.openxmlformats-officedocument.spreadsheetml.template":
-      return { ext: "xltx", mime: mimeType };
-    case "application/vnd.ms-excel.template.macroenabled":
-      return { ext: "xltm", mime: "application/vnd.ms-excel.template.macroenabled.12" };
-    case "application/vnd.ms-powerpoint.slideshow.macroenabled":
-      return { ext: "ppsm", mime: "application/vnd.ms-powerpoint.slideshow.macroenabled.12" };
-    case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-      return { ext: "docx", mime: mimeType };
-    case "application/vnd.ms-word.document.macroenabled":
-      return { ext: "docm", mime: "application/vnd.ms-word.document.macroenabled.12" };
-    case "application/vnd.openxmlformats-officedocument.wordprocessingml.template":
-      return { ext: "dotx", mime: mimeType };
-    case "application/vnd.ms-word.template.macroenabledtemplate":
-      return { ext: "dotm", mime: "application/vnd.ms-word.template.macroenabled.12" };
-    case "application/vnd.openxmlformats-officedocument.presentationml.template":
-      return { ext: "potx", mime: mimeType };
-    case "application/vnd.ms-powerpoint.template.macroenabled":
-      return { ext: "potm", mime: "application/vnd.ms-powerpoint.template.macroenabled.12" };
-    case "application/vnd.openxmlformats-officedocument.presentationml.presentation":
-      return { ext: "pptx", mime: mimeType };
-    case "application/vnd.ms-powerpoint.presentation.macroenabled":
-      return { ext: "pptm", mime: "application/vnd.ms-powerpoint.presentation.macroenabled.12" };
-    case "application/vnd.ms-visio.drawing":
-      return { ext: "vsdx", mime: "application/vnd.visio" };
-    case "application/vnd.ms-package.3dmanufacturing-3dmodel+xml":
-      return { ext: "3mf", mime: "model/3mf" };
-    default:
-  }
-}
-function createOpenXmlZipDetectionState() {
-  return {
-    hasContentTypesEntry: false,
-    hasParsedContentTypesEntry: false,
-    isParsingContentTypes: false,
-    hasUnparseableContentTypes: false,
-    hasWordDirectory: false,
-    hasPresentationDirectory: false,
-    hasSpreadsheetDirectory: false,
-    hasThreeDimensionalModelEntry: false
-  };
-}
-function updateOpenXmlZipDetectionStateFromFilename(openXmlState, filename) {
-  if (filename.startsWith("word/")) {
-    openXmlState.hasWordDirectory = true;
-  }
-  if (filename.startsWith("ppt/")) {
-    openXmlState.hasPresentationDirectory = true;
-  }
-  if (filename.startsWith("xl/")) {
-    openXmlState.hasSpreadsheetDirectory = true;
-  }
-  if (filename.startsWith("3D/") && filename.endsWith(".model")) {
-    openXmlState.hasThreeDimensionalModelEntry = true;
-  }
-}
-function getOpenXmlFileTypeFromDirectoryNames(openXmlState) {
-  if (openXmlState.hasWordDirectory) {
-    return {
-      ext: "docx",
-      mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    };
-  }
-  if (openXmlState.hasPresentationDirectory) {
-    return {
-      ext: "pptx",
-      mime: "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-    };
-  }
-  if (openXmlState.hasSpreadsheetDirectory) {
-    return {
-      ext: "xlsx",
-      mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    };
-  }
-  if (openXmlState.hasThreeDimensionalModelEntry) {
-    return {
-      ext: "3mf",
-      mime: "model/3mf"
-    };
-  }
-}
-function getOpenXmlFileTypeFromZipEntries(openXmlState) {
-  if (!openXmlState.hasContentTypesEntry || openXmlState.hasUnparseableContentTypes || openXmlState.isParsingContentTypes || openXmlState.hasParsedContentTypesEntry) {
-    return;
-  }
-  return getOpenXmlFileTypeFromDirectoryNames(openXmlState);
-}
-function getOpenXmlMimeTypeFromContentTypesXml(xmlContent) {
-  const endPosition = xmlContent.indexOf('.main+xml"');
-  if (endPosition === -1) {
-    const mimeType = "application/vnd.ms-package.3dmanufacturing-3dmodel+xml";
-    if (xmlContent.includes(`ContentType="${mimeType}"`)) {
-      return mimeType;
-    }
-    return;
-  }
-  const truncatedContent = xmlContent.slice(0, endPosition);
-  const firstQuotePosition = truncatedContent.lastIndexOf('"');
-  return truncatedContent.slice(firstQuotePosition + 1);
-}
-var zipDataDescriptorSignature = 134695760;
-var zipDataDescriptorLengthInBytes = 16;
-var zipDataDescriptorOverlapLengthInBytes = zipDataDescriptorLengthInBytes - 1;
-function findZipDataDescriptorOffset(buffer, bytesConsumed) {
-  if (buffer.length < zipDataDescriptorLengthInBytes) {
-    return -1;
-  }
-  const lastPossibleDescriptorOffset = buffer.length - zipDataDescriptorLengthInBytes;
-  for (let index = 0; index <= lastPossibleDescriptorOffset; index++) {
-    if (UINT32_LE.get(buffer, index) === zipDataDescriptorSignature && UINT32_LE.get(buffer, index + 8) === bytesConsumed + index) {
-      return index;
-    }
-  }
-  return -1;
-}
-async function readZipDataDescriptorEntryWithLimit(zipHandler, { shouldBuffer, maximumLength = maximumZipEntrySizeInBytes } = {}) {
-  const { syncBuffer } = zipHandler;
-  const { length: syncBufferLength } = syncBuffer;
-  const chunks = [];
-  let bytesConsumed = 0;
-  for (; ; ) {
-    const length = await zipHandler.tokenizer.peekBuffer(syncBuffer, { mayBeLess: true });
-    const dataDescriptorOffset = findZipDataDescriptorOffset(syncBuffer.subarray(0, length), bytesConsumed);
-    const retainedLength = dataDescriptorOffset >= 0 ? 0 : length === syncBufferLength ? Math.min(zipDataDescriptorOverlapLengthInBytes, length - 1) : 0;
-    const chunkLength = dataDescriptorOffset >= 0 ? dataDescriptorOffset : length - retainedLength;
-    if (chunkLength === 0) {
-      break;
-    }
-    bytesConsumed += chunkLength;
-    if (bytesConsumed > maximumLength) {
-      throw new Error(`ZIP entry compressed data exceeds ${maximumLength} bytes`);
-    }
-    if (shouldBuffer) {
-      const data = new Uint8Array(chunkLength);
-      await zipHandler.tokenizer.readBuffer(data);
-      chunks.push(data);
-    } else {
-      await zipHandler.tokenizer.ignore(chunkLength);
-    }
-    if (dataDescriptorOffset >= 0) {
-      break;
-    }
-  }
-  if (!hasUnknownFileSize(zipHandler.tokenizer)) {
-    zipHandler.knownSizeDescriptorScannedBytes += bytesConsumed;
-  }
-  if (!shouldBuffer) {
-    return;
-  }
-  return mergeByteChunks(chunks, bytesConsumed);
-}
-function getRemainingZipScanBudget(zipHandler, startOffset) {
-  if (hasUnknownFileSize(zipHandler.tokenizer)) {
-    return Math.max(0, maximumUntrustedSkipSizeInBytes - (zipHandler.tokenizer.position - startOffset));
-  }
-  return Math.max(0, maximumZipEntrySizeInBytes - zipHandler.knownSizeDescriptorScannedBytes);
-}
-async function readZipEntryData(zipHandler, zipHeader, { shouldBuffer, maximumDescriptorLength = maximumZipEntrySizeInBytes } = {}) {
-  if (zipHeader.dataDescriptor && zipHeader.compressedSize === 0) {
-    return readZipDataDescriptorEntryWithLimit(zipHandler, {
-      shouldBuffer,
-      maximumLength: maximumDescriptorLength
-    });
-  }
-  if (!shouldBuffer) {
-    await safeIgnore(zipHandler.tokenizer, zipHeader.compressedSize, {
-      maximumLength: hasUnknownFileSize(zipHandler.tokenizer) ? maximumZipEntrySizeInBytes : zipHandler.tokenizer.fileInfo.size,
-      reason: "ZIP entry compressed data"
-    });
-    return;
-  }
-  const maximumLength = getMaximumZipBufferedReadLength(zipHandler.tokenizer);
-  if (!Number.isFinite(zipHeader.compressedSize) || zipHeader.compressedSize < 0 || zipHeader.compressedSize > maximumLength) {
-    throw new Error(`ZIP entry compressed data exceeds ${maximumLength} bytes`);
-  }
-  const fileData = new Uint8Array(zipHeader.compressedSize);
-  await zipHandler.tokenizer.readBuffer(fileData);
-  return fileData;
-}
-ZipHandler.prototype.inflate = async function(zipHeader, fileData, callback) {
-  if (zipHeader.compressedMethod === 0) {
-    return callback(fileData);
-  }
-  if (zipHeader.compressedMethod !== 8) {
-    throw new Error(`Unsupported ZIP compression method: ${zipHeader.compressedMethod}`);
-  }
-  const uncompressedData = await decompressDeflateRawWithLimit(fileData, { maximumLength: maximumZipEntrySizeInBytes });
-  return callback(uncompressedData);
-};
-ZipHandler.prototype.unzip = async function(fileCallback) {
-  let stop = false;
-  let zipEntryCount = 0;
-  const zipScanStart = this.tokenizer.position;
-  this.knownSizeDescriptorScannedBytes = 0;
-  do {
-    if (hasExceededUnknownSizeScanBudget(this.tokenizer, zipScanStart, maximumUntrustedSkipSizeInBytes)) {
-      throw new ParserHardLimitError(`ZIP stream probing exceeds ${maximumUntrustedSkipSizeInBytes} bytes`);
-    }
-    const zipHeader = await this.readLocalFileHeader();
-    if (!zipHeader) {
-      break;
-    }
-    zipEntryCount++;
-    if (zipEntryCount > maximumZipEntryCount) {
-      throw new Error(`ZIP entry count exceeds ${maximumZipEntryCount}`);
-    }
-    const next = fileCallback(zipHeader);
-    stop = Boolean(next.stop);
-    await this.tokenizer.ignore(zipHeader.extraFieldLength);
-    const fileData = await readZipEntryData(this, zipHeader, {
-      shouldBuffer: Boolean(next.handler),
-      maximumDescriptorLength: Math.min(maximumZipEntrySizeInBytes, getRemainingZipScanBudget(this, zipScanStart))
-    });
-    if (next.handler) {
-      await this.inflate(zipHeader, fileData, next.handler);
-    }
-    if (zipHeader.dataDescriptor) {
-      const dataDescriptor = new Uint8Array(zipDataDescriptorLengthInBytes);
-      await this.tokenizer.readBuffer(dataDescriptor);
-      if (UINT32_LE.get(dataDescriptor, 0) !== zipDataDescriptorSignature) {
-        throw new Error(`Expected data-descriptor-signature at position ${this.tokenizer.position - dataDescriptor.length}`);
-      }
-    }
-    if (hasExceededUnknownSizeScanBudget(this.tokenizer, zipScanStart, maximumUntrustedSkipSizeInBytes)) {
-      throw new ParserHardLimitError(`ZIP stream probing exceeds ${maximumUntrustedSkipSizeInBytes} bytes`);
-    }
-  } while (!stop);
-};
-async function detectZip(tokenizer) {
-  let fileType;
-  const openXmlState = createOpenXmlZipDetectionState();
-  const iWorkState = createIWorkZipDetectionState();
-  try {
-    await new ZipHandler(tokenizer).unzip((zipHeader) => {
-      updateOpenXmlZipDetectionStateFromFilename(openXmlState, zipHeader.filename);
-      updateIWorkZipDetectionStateFromFilename(iWorkState, zipHeader.filename);
-      if (iWorkState.hasDocumentEntry && (iWorkState.hasMasterSlideEntry || iWorkState.hasTablesEntry)) {
-        fileType = getIWorkFileTypeFromZipEntries(iWorkState);
-        return { stop: true };
-      }
-      const isOpenXmlContentTypesEntry = zipHeader.filename === "[Content_Types].xml";
-      const openXmlFileTypeFromEntries = getOpenXmlFileTypeFromZipEntries(openXmlState);
-      if (!isOpenXmlContentTypesEntry && openXmlFileTypeFromEntries) {
-        fileType = openXmlFileTypeFromEntries;
-        return {
-          stop: true
-        };
-      }
-      switch (zipHeader.filename) {
-        case "META-INF/mozilla.rsa":
-          fileType = {
-            ext: "xpi",
-            mime: "application/x-xpinstall"
-          };
-          return {
-            stop: true
-          };
-        case "META-INF/MANIFEST.MF":
-          fileType = {
-            ext: "jar",
-            mime: "application/java-archive"
-          };
-          return {
-            stop: true
-          };
-        case "mimetype":
-          if (!canReadZipEntryForDetection(zipHeader, maximumZipTextEntrySizeInBytes)) {
-            return {};
-          }
-          return {
-            async handler(fileData) {
-              const mimeType = new TextDecoder("utf-8").decode(fileData).trim();
-              fileType = getFileTypeFromMimeType(mimeType);
-            },
-            stop: true
-          };
-        case "[Content_Types].xml": {
-          openXmlState.hasContentTypesEntry = true;
-          if (!canReadZipEntryForDetection(zipHeader, maximumZipTextEntrySizeInBytes)) {
-            openXmlState.hasUnparseableContentTypes = true;
-            return {};
-          }
-          openXmlState.isParsingContentTypes = true;
-          return {
-            async handler(fileData) {
-              const xmlContent = new TextDecoder("utf-8").decode(fileData);
-              const mimeType = getOpenXmlMimeTypeFromContentTypesXml(xmlContent);
-              if (mimeType) {
-                fileType = getFileTypeFromMimeType(mimeType);
-              }
-              openXmlState.hasParsedContentTypesEntry = true;
-              openXmlState.isParsingContentTypes = false;
-            },
-            stop: true
-          };
-        }
-        default:
-          if (new RegExp("classes\\d*\\.dex", "v").test(zipHeader.filename)) {
-            fileType = {
-              ext: "apk",
-              mime: "application/vnd.android.package-archive"
-            };
-            return { stop: true };
-          }
-          return {};
-      }
-    });
-  } catch (error62) {
-    if (!isRecoverableZipError(error62)) {
-      throw error62;
-    }
-    if (openXmlState.isParsingContentTypes) {
-      openXmlState.isParsingContentTypes = false;
-      openXmlState.hasUnparseableContentTypes = true;
-    }
-    if (!fileType && error62 instanceof EndOfStreamError && !openXmlState.hasContentTypesEntry) {
-      fileType = getOpenXmlFileTypeFromDirectoryNames(openXmlState);
-    }
-  }
-  const iWorkFileType = hasUnknownFileSize(tokenizer) && iWorkState.hasDocumentEntry && !iWorkState.hasMasterSlideEntry && !iWorkState.hasTablesEntry && !iWorkState.hasCalculationEngineEntry ? void 0 : getIWorkFileTypeFromZipEntries(iWorkState);
-  return fileType ?? getOpenXmlFileTypeFromZipEntries(openXmlState) ?? iWorkFileType ?? {
-    ext: "zip",
-    mime: "application/zip"
-  };
-}
-
-// node_modules/file-type/source/detectors/ebml.js
-var maximumEbmlDocumentTypeSizeInBytes = 64;
-var maximumEbmlElementPayloadSizeInBytes = 1024 * 1024;
-var maximumEbmlElementCount = 256;
-async function detectEbml(tokenizer) {
-  async function readField() {
-    const msb = await tokenizer.peekNumber(UINT8);
-    let mask = 128;
-    let ic = 0;
-    while ((msb & mask) === 0 && mask !== 0) {
-      ++ic;
-      mask >>= 1;
-    }
-    const id = new Uint8Array(ic + 1);
-    await safeReadBuffer(tokenizer, id, void 0, {
-      maximumLength: id.length,
-      reason: "EBML field"
-    });
-    return id;
-  }
-  async function readElement() {
-    const idField = await readField();
-    const lengthField = await readField();
-    lengthField[0] ^= 128 >> lengthField.length - 1;
-    const nrLength = Math.min(6, lengthField.length);
-    const idView = new DataView(idField.buffer);
-    const lengthView = new DataView(lengthField.buffer, lengthField.length - nrLength, nrLength);
-    return {
-      id: getUintBE(idView),
-      len: getUintBE(lengthView)
-    };
-  }
-  async function readChildren(children) {
-    let ebmlElementCount = 0;
-    while (children > 0) {
-      ebmlElementCount++;
-      if (ebmlElementCount > maximumEbmlElementCount) {
-        return;
-      }
-      if (hasExceededUnknownSizeScanBudget(tokenizer, ebmlScanStart, maximumUntrustedSkipSizeInBytes)) {
-        return;
-      }
-      const previousPosition = tokenizer.position;
-      const element = await readElement();
-      if (element.id === 17026) {
-        if (element.len > maximumEbmlDocumentTypeSizeInBytes) {
-          return;
-        }
-        const documentTypeLength = getSafeBound(element.len, maximumEbmlDocumentTypeSizeInBytes, "EBML DocType");
-        const rawValue = await tokenizer.readToken(new StringType(documentTypeLength));
-        return rawValue.replaceAll(new RegExp("\\0.*$", "gv"), "");
-      }
-      if (hasUnknownFileSize(tokenizer) && (!Number.isFinite(element.len) || element.len < 0 || element.len > maximumEbmlElementPayloadSizeInBytes)) {
-        return;
-      }
-      await safeIgnore(tokenizer, element.len, {
-        maximumLength: hasUnknownFileSize(tokenizer) ? maximumEbmlElementPayloadSizeInBytes : tokenizer.fileInfo.size,
-        reason: "EBML payload"
-      });
-      --children;
-      if (tokenizer.position <= previousPosition) {
-        return;
-      }
-    }
-  }
-  const rootElement = await readElement();
-  const ebmlScanStart = tokenizer.position;
-  const documentType = await readChildren(rootElement.len);
-  switch (documentType) {
-    case "webm":
-      return {
-        ext: "webm",
-        mime: "video/webm"
-      };
-    case "matroska":
-      return {
-        ext: "mkv",
-        mime: "video/matroska"
-      };
-    default:
-  }
-}
-
-// node_modules/file-type/source/detectors/png.js
-var maximumPngChunkCount = 512;
-var maximumPngStreamScanBudgetInBytes = 16 * 1024 * 1024;
-var maximumPngChunkSizeInBytes = 1024 * 1024;
-function isPngAncillaryChunk(type) {
-  return (type.codePointAt(0) & 32) !== 0;
-}
-async function detectPng(tokenizer) {
-  const pngFileType = {
-    ext: "png",
-    mime: "image/png"
-  };
-  const apngFileType = {
-    ext: "apng",
-    mime: "image/apng"
-  };
-  await tokenizer.ignore(8);
-  async function readChunkHeader() {
-    return {
-      length: await tokenizer.readToken(INT32_BE),
-      type: await tokenizer.readToken(new StringType(4, "latin1"))
-    };
-  }
-  const isUnknownPngStream = hasUnknownFileSize(tokenizer);
-  const pngScanStart = tokenizer.position;
-  let pngChunkCount = 0;
-  let hasSeenImageHeader = false;
-  do {
-    pngChunkCount++;
-    if (pngChunkCount > maximumPngChunkCount) {
-      break;
-    }
-    if (hasExceededUnknownSizeScanBudget(tokenizer, pngScanStart, maximumPngStreamScanBudgetInBytes)) {
-      break;
-    }
-    const previousPosition = tokenizer.position;
-    const chunk = await readChunkHeader();
-    if (chunk.length < 0) {
-      return;
-    }
-    if (chunk.type === "IHDR") {
-      if (chunk.length !== 13) {
-        return;
-      }
-      hasSeenImageHeader = true;
-    }
-    switch (chunk.type) {
-      case "IDAT":
-        return pngFileType;
-      case "acTL":
-        return apngFileType;
-      default:
-        if (!hasSeenImageHeader && chunk.type !== "CgBI") {
-          return;
-        }
-        if (isUnknownPngStream && chunk.length > maximumPngChunkSizeInBytes) {
-          return hasSeenImageHeader && isPngAncillaryChunk(chunk.type) ? pngFileType : void 0;
-        }
-        try {
-          await safeIgnore(tokenizer, chunk.length + 4, {
-            maximumLength: isUnknownPngStream ? maximumPngChunkSizeInBytes + 4 : tokenizer.fileInfo.size,
-            reason: "PNG chunk payload"
-          });
-        } catch (error62) {
-          if (!isUnknownPngStream && (error62 instanceof ParserHardLimitError || error62 instanceof EndOfStreamError)) {
-            return pngFileType;
-          }
-          throw error62;
-        }
-    }
-    if (tokenizer.position <= previousPosition) {
-      break;
-    }
-  } while (tokenizer.position + 8 < tokenizer.fileInfo.size);
-  return pngFileType;
-}
-
-// node_modules/file-type/source/detectors/asf.js
-var maximumAsfHeaderObjectCount = 512;
-var maximumAsfHeaderPayloadSizeInBytes = 1024 * 1024;
-async function detectAsf(tokenizer) {
-  let isMalformedAsf = false;
-  try {
-    async function readHeader() {
-      const guid3 = new Uint8Array(16);
-      await safeReadBuffer(tokenizer, guid3, void 0, {
-        maximumLength: guid3.length,
-        reason: "ASF header GUID"
-      });
-      return {
-        id: guid3,
-        size: Number(await tokenizer.readToken(UINT64_LE))
-      };
-    }
-    await safeIgnore(tokenizer, 30, {
-      maximumLength: 30,
-      reason: "ASF header prelude"
-    });
-    const isUnknownFileSize = hasUnknownFileSize(tokenizer);
-    const asfHeaderScanStart = tokenizer.position;
-    let asfHeaderObjectCount = 0;
-    while (tokenizer.position + 24 < tokenizer.fileInfo.size) {
-      asfHeaderObjectCount++;
-      if (asfHeaderObjectCount > maximumAsfHeaderObjectCount) {
-        break;
-      }
-      if (hasExceededUnknownSizeScanBudget(tokenizer, asfHeaderScanStart, maximumUntrustedSkipSizeInBytes)) {
-        break;
-      }
-      const previousPosition = tokenizer.position;
-      const header = await readHeader();
-      let payload = header.size - 24;
-      if (!Number.isFinite(payload) || payload < 0) {
-        isMalformedAsf = true;
-        break;
-      }
-      if (checkBytes(header.id, [145, 7, 220, 183, 183, 169, 207, 17, 142, 230, 0, 192, 12, 32, 83, 101])) {
-        const typeId = new Uint8Array(16);
-        payload -= await safeReadBuffer(tokenizer, typeId, void 0, {
-          maximumLength: typeId.length,
-          reason: "ASF stream type GUID"
-        });
-        if (checkBytes(typeId, [64, 158, 105, 248, 77, 91, 207, 17, 168, 253, 0, 128, 95, 92, 68, 43])) {
-          return {
-            ext: "asf",
-            mime: "audio/x-ms-asf"
-          };
-        }
-        if (checkBytes(typeId, [192, 239, 25, 188, 77, 91, 207, 17, 168, 253, 0, 128, 95, 92, 68, 43])) {
-          return {
-            ext: "asf",
-            mime: "video/x-ms-asf"
-          };
-        }
-        break;
-      }
-      if (isUnknownFileSize && payload > maximumAsfHeaderPayloadSizeInBytes) {
-        isMalformedAsf = true;
-        break;
-      }
-      await safeIgnore(tokenizer, payload, {
-        maximumLength: isUnknownFileSize ? maximumAsfHeaderPayloadSizeInBytes : tokenizer.fileInfo.size,
-        reason: "ASF header payload"
-      });
-      if (tokenizer.position <= previousPosition) {
-        isMalformedAsf = true;
-        break;
-      }
-    }
-  } catch (error62) {
-    if (error62 instanceof EndOfStreamError || error62 instanceof ParserHardLimitError) {
-      if (hasUnknownFileSize(tokenizer)) {
-        isMalformedAsf = true;
-      }
-    } else {
-      throw error62;
-    }
-  }
-  if (isMalformedAsf) {
-    return;
-  }
-  return {
-    ext: "asf",
-    mime: "application/vnd.ms-asf"
-  };
-}
-
-// node_modules/file-type/source/index.js
-var reasonableDetectionSizeInBytes = 4100;
-var maximumMpegOffsetTolerance = reasonableDetectionSizeInBytes - 4;
-var maximumNestedGzipDetectionSizeInBytes = maximumUntrustedSkipSizeInBytes;
-var maximumNestedGzipProbeDepth = 1;
-var unknownSizeGzipProbeTimeoutInMilliseconds = 100;
-var maximumId3HeaderSizeInBytes = maximumUntrustedSkipSizeInBytes;
-var maximumTiffTagCount = 512;
-var maximumDetectionReentryCount = 256;
-var maximumTiffStreamIfdOffsetInBytes = 1024 * 1024;
-var maximumTiffIfdOffsetInBytes = maximumUntrustedSkipSizeInBytes;
-function normalizeSampleSize(sampleSize) {
-  if (!Number.isFinite(sampleSize)) {
-    return reasonableDetectionSizeInBytes;
-  }
-  return Math.max(1, Math.trunc(sampleSize));
-}
-function normalizeMpegOffsetTolerance(mpegOffsetTolerance) {
-  if (!Number.isFinite(mpegOffsetTolerance)) {
-    return 0;
-  }
-  return Math.max(0, Math.min(maximumMpegOffsetTolerance, Math.trunc(mpegOffsetTolerance)));
-}
-function getKnownFileSizeOrMaximum(fileSize) {
-  if (!Number.isFinite(fileSize)) {
-    return Number.MAX_SAFE_INTEGER;
-  }
-  return Math.max(0, fileSize);
-}
-function importAtRuntime(specifier) {
-  return import(
-    /* @vite-ignore */
-    /* webpackIgnore: true */
-    specifier
-  );
-}
-function toDefaultStream(stream) {
-  return stream.pipeThrough(new TransformStream());
-}
-function readWithSignal(reader, signal) {
-  if (signal === void 0) {
-    return reader.read();
-  }
-  signal.throwIfAborted();
-  return Promise.race([
-    reader.read(),
-    new Promise((_resolve, reject) => {
-      signal.addEventListener("abort", () => {
-        reject(signal.reason);
-        reader.cancel(signal.reason).catch(() => {
-        });
-      }, { once: true });
-    })
-  ]);
-}
-function createByteLimitedReadableStream(stream, maximumBytes) {
-  const reader = stream.getReader();
-  let emittedBytes = 0;
-  let sourceDone = false;
-  let sourceCanceled = false;
-  const cancelSource = async (reason) => {
-    if (sourceDone || sourceCanceled) {
-      return;
-    }
-    sourceCanceled = true;
-    await reader.cancel(reason);
-  };
-  return new ReadableStream({
-    async pull(controller) {
-      if (emittedBytes >= maximumBytes) {
-        controller.close();
-        await cancelSource();
-        return;
-      }
-      const { done, value } = await reader.read();
-      if (done || !value) {
-        sourceDone = true;
-        controller.close();
-        return;
-      }
-      const remainingBytes = maximumBytes - emittedBytes;
-      if (value.length > remainingBytes) {
-        controller.enqueue(value.subarray(0, remainingBytes));
-        emittedBytes += remainingBytes;
-        controller.close();
-        await cancelSource();
-        return;
-      }
-      controller.enqueue(value);
-      emittedBytes += value.length;
-    },
-    async cancel(reason) {
-      await cancelSource(reason);
-    }
-  });
-}
-var FileTypeParser = class _FileTypeParser {
-  constructor(options) {
-    const normalizedMpegOffsetTolerance = normalizeMpegOffsetTolerance(options?.mpegOffsetTolerance);
-    this.options = {
-      ...options,
-      mpegOffsetTolerance: normalizedMpegOffsetTolerance
-    };
-    this.detectors = [
-      ...this.options.customDetectors ?? [],
-      { id: "core", detect: this.detectConfident },
-      { id: "core.imprecise", detect: this.detectImprecise }
-    ];
-    this.tokenizerOptions = {
-      abortSignal: this.options.signal
-    };
-    this.gzipProbeDepth = 0;
-  }
-  getTokenizerOptions() {
-    return {
-      ...this.tokenizerOptions
-    };
-  }
-  createTokenizerFromWebStream(stream) {
-    return fromWebStream(toDefaultStream(stream), this.getTokenizerOptions());
-  }
-  async parseTokenizer(tokenizer, detectionReentryCount = 0) {
-    this.detectionReentryCount = detectionReentryCount;
-    const initialPosition = tokenizer.position;
-    for (const detector of this.detectors) {
-      let fileType;
-      try {
-        fileType = await detector.detect(tokenizer);
-      } catch (error62) {
-        if (error62 instanceof EndOfStreamError) {
-          return;
-        }
-        if (error62 instanceof ParserHardLimitError) {
-          return;
-        }
-        throw error62;
-      }
-      if (fileType) {
-        return fileType;
-      }
-      if (initialPosition !== tokenizer.position) {
-        return void 0;
-      }
-    }
-  }
-  async fromTokenizer(tokenizer) {
-    try {
-      return await this.parseTokenizer(tokenizer);
-    } finally {
-      await tokenizer.close();
-    }
-  }
-  async fromBuffer(input2) {
-    if (!(input2 instanceof Uint8Array || input2 instanceof ArrayBuffer)) {
-      throw new TypeError(`Expected the \`input\` argument to be of type \`Uint8Array\` or \`ArrayBuffer\`, got \`${typeof input2}\``);
-    }
-    const buffer = input2 instanceof Uint8Array ? input2 : new Uint8Array(input2);
-    if (!(buffer?.length > 1)) {
-      return;
-    }
-    return this.fromTokenizer(fromBuffer(buffer, this.getTokenizerOptions()));
-  }
-  async fromBlob(blob) {
-    this.options.signal?.throwIfAborted();
-    const tokenizer = fromBlob(blob, this.getTokenizerOptions());
-    return this.fromTokenizer(tokenizer);
-  }
-  async fromStream(stream) {
-    this.options.signal?.throwIfAborted();
-    const tokenizer = this.createTokenizerFromWebStream(stream);
-    return this.fromTokenizer(tokenizer);
-  }
-  async fromFile(path) {
-    this.options.signal?.throwIfAborted();
-    const [{ default: fsPromises }, { FileTokenizer }] = await Promise.all([
-      importAtRuntime("node:fs/promises"),
-      importAtRuntime("strtok3")
-    ]);
-    const fileHandle = await fsPromises.open(path, fsPromises.constants.O_RDONLY | fsPromises.constants.O_NONBLOCK);
-    const fileStat = await fileHandle.stat();
-    if (!fileStat.isFile()) {
-      await fileHandle.close();
-      return;
-    }
-    const tokenizer = new FileTokenizer(fileHandle, {
-      ...this.getTokenizerOptions(),
-      fileInfo: { path, size: fileStat.size }
-    });
-    return this.fromTokenizer(tokenizer);
-  }
-  async toDetectionStream(stream, options) {
-    this.options.signal?.throwIfAborted();
-    const sampleSize = normalizeSampleSize(options?.sampleSize ?? reasonableDetectionSizeInBytes);
-    let detectedFileType;
-    let streamEnded = false;
-    const reader = stream.getReader();
-    const chunks = [];
-    let totalSize = 0;
-    try {
-      while (totalSize < sampleSize) {
-        const { value, done } = await readWithSignal(reader, this.options.signal);
-        if (done || !value) {
-          streamEnded = true;
-          break;
-        }
-        chunks.push(value);
-        totalSize += value.length;
-      }
-      if (!streamEnded && totalSize === sampleSize) {
-        const { value, done } = await readWithSignal(reader, this.options.signal);
-        if (done || !value) {
-          streamEnded = true;
-        } else {
-          chunks.push(value);
-          totalSize += value.length;
-        }
-      }
-    } finally {
-      reader.releaseLock();
-    }
-    if (totalSize > 0) {
-      const sample = chunks.length === 1 ? chunks[0] : concatUint8Arrays(chunks);
-      try {
-        detectedFileType = await this.fromBuffer(sample.subarray(0, sampleSize));
-      } catch (error62) {
-        if (!(error62 instanceof EndOfStreamError)) {
-          throw error62;
-        }
-        detectedFileType = void 0;
-      }
-      if (!streamEnded && detectedFileType?.ext === "pages") {
-        detectedFileType = {
-          ext: "zip",
-          mime: "application/zip"
-        };
-      }
-    }
-    const transformStream = new TransformStream({
-      start(controller) {
-        for (const chunk of chunks) {
-          controller.enqueue(chunk);
-        }
-      },
-      transform(chunk, controller) {
-        controller.enqueue(chunk);
-      }
-    });
-    const newStream = stream.pipeThrough(transformStream);
-    newStream.fileType = detectedFileType;
-    return newStream;
-  }
-  async detectGzip(tokenizer) {
-    if (this.gzipProbeDepth >= maximumNestedGzipProbeDepth) {
-      return {
-        ext: "gz",
-        mime: "application/gzip"
-      };
-    }
-    const gzipHandler = new GzipHandler(tokenizer);
-    const limitedInflatedStream = createByteLimitedReadableStream(gzipHandler.inflate(), maximumNestedGzipDetectionSizeInBytes);
-    const hasUnknownSize = hasUnknownFileSize(tokenizer);
-    let timeout;
-    let probeSignal;
-    let probeParser;
-    let compressedFileType;
-    if (hasUnknownSize) {
-      const timeoutController = new AbortController();
-      timeout = setTimeout(() => {
-        timeoutController.abort(new DOMException(`Operation timed out after ${unknownSizeGzipProbeTimeoutInMilliseconds} ms`, "TimeoutError"));
-      }, unknownSizeGzipProbeTimeoutInMilliseconds);
-      probeSignal = this.options.signal === void 0 ? timeoutController.signal : AbortSignal.any([this.options.signal, timeoutController.signal]);
-      probeParser = new _FileTypeParser({
-        ...this.options,
-        signal: probeSignal
-      });
-      probeParser.gzipProbeDepth = this.gzipProbeDepth + 1;
-    } else {
-      this.gzipProbeDepth++;
-    }
-    try {
-      compressedFileType = await (probeParser ?? this).fromStream(limitedInflatedStream);
-    } catch (error62) {
-      if (error62?.name === "AbortError" && probeSignal?.reason?.name !== "TimeoutError") {
-        throw error62;
-      }
-    } finally {
-      clearTimeout(timeout);
-      if (!hasUnknownSize) {
-        this.gzipProbeDepth--;
-      }
-    }
-    if (compressedFileType?.ext === "tar") {
-      return {
-        ext: "tar.gz",
-        mime: "application/gzip"
-      };
-    }
-    return {
-      ext: "gz",
-      mime: "application/gzip"
-    };
-  }
-  check(header, options) {
-    return checkBytes(this.buffer, header, options);
-  }
-  checkString(header, options) {
-    return this.check(stringToBytes(header, options?.encoding), options);
-  }
-  // Detections with a high degree of certainty in identifying the correct file type
-  detectConfident = async (tokenizer) => {
-    this.buffer = new Uint8Array(reasonableDetectionSizeInBytes);
-    if (tokenizer.fileInfo.size === void 0) {
-      tokenizer.fileInfo.size = Number.MAX_SAFE_INTEGER;
-    }
-    this.tokenizer = tokenizer;
-    if (hasUnknownFileSize(tokenizer)) {
-      await tokenizer.peekBuffer(this.buffer, { length: 3, mayBeLess: true });
-      if (this.check([31, 139, 8])) {
-        return this.detectGzip(tokenizer);
-      }
-    }
-    await tokenizer.peekBuffer(this.buffer, { length: 32, mayBeLess: true });
-    if (this.check([66, 77])) {
-      return {
-        ext: "bmp",
-        mime: "image/bmp"
-      };
-    }
-    if (this.check([11, 119])) {
-      return {
-        ext: "ac3",
-        mime: "audio/vnd.dolby.dd-raw"
-      };
-    }
-    if (this.check([120, 1])) {
-      return {
-        ext: "dmg",
-        mime: "application/x-apple-diskimage"
-      };
-    }
-    if (this.check([77, 90])) {
-      return {
-        ext: "exe",
-        mime: "application/x-msdownload"
-      };
-    }
-    if (this.check([37, 33])) {
-      await tokenizer.peekBuffer(this.buffer, { length: 24, mayBeLess: true });
-      if (this.checkString("PS-Adobe-", { offset: 2 }) && this.checkString(" EPSF-", { offset: 14 })) {
-        return {
-          ext: "eps",
-          mime: "application/eps"
-        };
-      }
-      return {
-        ext: "ps",
-        mime: "application/postscript"
-      };
-    }
-    if (this.check([31, 160]) || this.check([31, 157])) {
-      return {
-        ext: "Z",
-        mime: "application/x-compress"
-      };
-    }
-    if (this.check([199, 113])) {
-      return {
-        ext: "cpio",
-        mime: "application/x-cpio"
-      };
-    }
-    if (this.check([96, 234])) {
-      return {
-        ext: "arj",
-        mime: "application/x-arj"
-      };
-    }
-    if (this.check([239, 187, 191])) {
-      if (this.detectionReentryCount >= maximumDetectionReentryCount) {
-        return;
-      }
-      this.detectionReentryCount++;
-      await this.tokenizer.ignore(3);
-      return this.detectConfident(tokenizer);
-    }
-    if (this.check([71, 73, 70])) {
-      return {
-        ext: "gif",
-        mime: "image/gif"
-      };
-    }
-    if (this.check([73, 73, 188])) {
-      return {
-        ext: "jxr",
-        mime: "image/vnd.ms-photo"
-      };
-    }
-    if (this.check([31, 139, 8])) {
-      return this.detectGzip(tokenizer);
-    }
-    if (this.check([66, 90, 104])) {
-      return {
-        ext: "bz2",
-        mime: "application/x-bzip2"
-      };
-    }
-    if (this.checkString("ID3")) {
-      await safeIgnore(tokenizer, 6, {
-        maximumLength: 6,
-        reason: "ID3 header prefix"
-      });
-      const id3HeaderLength = await tokenizer.readToken(uint32SyncSafeToken);
-      const isUnknownFileSize = hasUnknownFileSize(tokenizer);
-      if (!Number.isFinite(id3HeaderLength) || id3HeaderLength < 0 || isUnknownFileSize && (id3HeaderLength > maximumId3HeaderSizeInBytes || tokenizer.position + id3HeaderLength > maximumId3HeaderSizeInBytes)) {
-        return;
-      }
-      if (tokenizer.position + id3HeaderLength > tokenizer.fileInfo.size) {
-        if (isUnknownFileSize) {
-          return;
-        }
-        return {
-          ext: "mp3",
-          mime: "audio/mpeg"
-        };
-      }
-      try {
-        await safeIgnore(tokenizer, id3HeaderLength, {
-          maximumLength: isUnknownFileSize ? maximumId3HeaderSizeInBytes : tokenizer.fileInfo.size,
-          reason: "ID3 payload"
-        });
-      } catch (error62) {
-        if (error62 instanceof EndOfStreamError) {
-          return;
-        }
-        throw error62;
-      }
-      if (this.detectionReentryCount >= maximumDetectionReentryCount) {
-        return;
-      }
-      this.detectionReentryCount++;
-      return this.parseTokenizer(tokenizer, this.detectionReentryCount);
-    }
-    if (this.checkString("MP+")) {
-      return {
-        ext: "mpc",
-        mime: "audio/x-musepack"
-      };
-    }
-    if ((this.buffer[0] === 67 || this.buffer[0] === 70) && this.check([87, 83], { offset: 1 })) {
-      return {
-        ext: "swf",
-        mime: "application/x-shockwave-flash"
-      };
-    }
-    if (this.check([255, 216, 255])) {
-      if (this.check([247], { offset: 3 })) {
-        return {
-          ext: "jls",
-          mime: "image/jls"
-        };
-      }
-      return {
-        ext: "jpg",
-        mime: "image/jpeg"
-      };
-    }
-    if (this.check([79, 98, 106, 1])) {
-      return {
-        ext: "avro",
-        mime: "application/avro"
-      };
-    }
-    if (this.checkString("FLIF")) {
-      return {
-        ext: "flif",
-        mime: "image/flif"
-      };
-    }
-    if (this.checkString("8BPS")) {
-      return {
-        ext: "psd",
-        mime: "image/vnd.adobe.photoshop"
-      };
-    }
-    if (this.checkString("MPCK")) {
-      return {
-        ext: "mpc",
-        mime: "audio/x-musepack"
-      };
-    }
-    if (this.checkString("FORM")) {
-      return {
-        ext: "aif",
-        mime: "audio/aiff"
-      };
-    }
-    if (this.checkString("icns", { offset: 0 })) {
-      return {
-        ext: "icns",
-        mime: "image/icns"
-      };
-    }
-    if (this.check([80, 75, 3, 4])) {
-      return detectZip(tokenizer);
-    }
-    if (this.checkString("OggS")) {
-      await tokenizer.ignore(28);
-      const type = new Uint8Array(8);
-      await tokenizer.readBuffer(type);
-      if (checkBytes(type, [79, 112, 117, 115, 72, 101, 97, 100])) {
-        return {
-          ext: "opus",
-          mime: "audio/ogg; codecs=opus"
-        };
-      }
-      if (checkBytes(type, [128, 116, 104, 101, 111, 114, 97])) {
-        return {
-          ext: "ogv",
-          mime: "video/ogg"
-        };
-      }
-      if (checkBytes(type, [1, 118, 105, 100, 101, 111, 0])) {
-        return {
-          ext: "ogm",
-          mime: "video/ogg"
-        };
-      }
-      if (checkBytes(type, [127, 70, 76, 65, 67])) {
-        return {
-          ext: "oga",
-          mime: "audio/ogg"
-        };
-      }
-      if (checkBytes(type, [83, 112, 101, 101, 120, 32, 32])) {
-        return {
-          ext: "spx",
-          mime: "audio/ogg"
-        };
-      }
-      if (checkBytes(type, [1, 118, 111, 114, 98, 105, 115])) {
-        return {
-          ext: "ogg",
-          mime: "audio/ogg"
-        };
-      }
-      return {
-        ext: "ogx",
-        mime: "application/ogg"
-      };
-    }
-    if (this.check([80, 75]) && (this.buffer[2] === 3 || this.buffer[2] === 5 || this.buffer[2] === 7) && (this.buffer[3] === 4 || this.buffer[3] === 6 || this.buffer[3] === 8)) {
-      return {
-        ext: "zip",
-        mime: "application/zip"
-      };
-    }
-    if (this.checkString("MThd")) {
-      return {
-        ext: "mid",
-        mime: "audio/midi"
-      };
-    }
-    if (this.checkString("wOFF") && (this.check([0, 1, 0, 0], { offset: 4 }) || this.checkString("OTTO", { offset: 4 }))) {
-      return {
-        ext: "woff",
-        mime: "font/woff"
-      };
-    }
-    if (this.checkString("wOF2") && (this.check([0, 1, 0, 0], { offset: 4 }) || this.checkString("OTTO", { offset: 4 }))) {
-      return {
-        ext: "woff2",
-        mime: "font/woff2"
-      };
-    }
-    if (this.check([212, 195, 178, 161]) || this.check([161, 178, 195, 212])) {
-      return {
-        ext: "pcap",
-        mime: "application/vnd.tcpdump.pcap"
-      };
-    }
-    if (this.checkString("DSD ")) {
-      return {
-        ext: "dsf",
-        mime: "audio/x-dsf"
-        // Non-standard
-      };
-    }
-    if (this.checkString("LZIP")) {
-      return {
-        ext: "lz",
-        mime: "application/lzip"
-      };
-    }
-    if (this.checkString("fLaC")) {
-      return {
-        ext: "flac",
-        mime: "audio/flac"
-      };
-    }
-    if (this.check([66, 80, 71, 251])) {
-      return {
-        ext: "bpg",
-        mime: "image/bpg"
-      };
-    }
-    if (this.checkString("wvpk")) {
-      return {
-        ext: "wv",
-        mime: "audio/wavpack"
-      };
-    }
-    if (this.checkString("%PDF")) {
-      return {
-        ext: "pdf",
-        mime: "application/pdf"
-      };
-    }
-    if (this.check([0, 97, 115, 109])) {
-      return {
-        ext: "wasm",
-        mime: "application/wasm"
-      };
-    }
-    if (this.check([73, 73])) {
-      const fileType = await this.readTiffHeader(false);
-      if (fileType) {
-        return fileType;
-      }
-    }
-    if (this.check([77, 77])) {
-      const fileType = await this.readTiffHeader(true);
-      if (fileType) {
-        return fileType;
-      }
-    }
-    if (this.checkString("MAC ")) {
-      return {
-        ext: "ape",
-        mime: "audio/ape"
-      };
-    }
-    if (this.check([26, 69, 223, 163])) {
-      return detectEbml(tokenizer);
-    }
-    if (this.checkString("SQLi")) {
-      return {
-        ext: "sqlite",
-        mime: "application/x-sqlite3"
-      };
-    }
-    if (this.check([78, 69, 83, 26])) {
-      return {
-        ext: "nes",
-        mime: "application/x-nintendo-nes-rom"
-      };
-    }
-    if (this.checkString("Cr24")) {
-      return {
-        ext: "crx",
-        mime: "application/x-google-chrome-extension"
-      };
-    }
-    if (this.checkString("MSCF") || this.checkString("ISc(")) {
-      return {
-        ext: "cab",
-        mime: "application/vnd.ms-cab-compressed"
-      };
-    }
-    if (this.check([237, 171, 238, 219])) {
-      return {
-        ext: "rpm",
-        mime: "application/x-rpm"
-      };
-    }
-    if (this.check([197, 208, 211, 198])) {
-      return {
-        ext: "eps",
-        mime: "application/eps"
-      };
-    }
-    if (this.check([40, 181, 47, 253])) {
-      return {
-        ext: "zst",
-        mime: "application/zstd"
-      };
-    }
-    if (this.check([127, 69, 76, 70])) {
-      return {
-        ext: "elf",
-        mime: "application/x-elf"
-      };
-    }
-    if (this.check([33, 66, 68, 78])) {
-      return {
-        ext: "pst",
-        mime: "application/vnd.ms-outlook"
-      };
-    }
-    if (this.checkString("PAR1") || this.checkString("PARE")) {
-      return {
-        ext: "parquet",
-        mime: "application/vnd.apache.parquet"
-      };
-    }
-    if (this.checkString("ttcf")) {
-      return {
-        ext: "ttc",
-        mime: "font/collection"
-      };
-    }
-    if (this.check([254, 237, 250, 206]) || this.check([254, 237, 250, 207]) || this.check([206, 250, 237, 254]) || this.check([207, 250, 237, 254])) {
-      return {
-        ext: "macho",
-        mime: "application/x-mach-binary"
-      };
-    }
-    if (this.check([4, 34, 77, 24])) {
-      return {
-        ext: "lz4",
-        mime: "application/x-lz4"
-        // Informal, used by freedesktop.org shared-mime-info
-      };
-    }
-    if (this.checkString("regf")) {
-      return {
-        ext: "dat",
-        mime: "application/x-ft-windows-registry-hive"
-      };
-    }
-    if (this.checkString("$FL2") || this.checkString("$FL3")) {
-      return {
-        ext: "sav",
-        mime: "application/x-spss-sav"
-      };
-    }
-    if (this.check([79, 84, 84, 79, 0])) {
-      return {
-        ext: "otf",
-        mime: "font/otf"
-      };
-    }
-    if (this.checkString("#!AMR")) {
-      return {
-        ext: "amr",
-        mime: "audio/amr"
-      };
-    }
-    if (this.checkString(String.raw`{\rtf`)) {
-      return {
-        ext: "rtf",
-        mime: "application/rtf"
-      };
-    }
-    if (this.check([70, 76, 86, 1])) {
-      return {
-        ext: "flv",
-        mime: "video/x-flv"
-      };
-    }
-    if (this.checkString("IMPM")) {
-      return {
-        ext: "it",
-        mime: "audio/x-it"
-      };
-    }
-    if (this.checkString("-lh0-", { offset: 2 }) || this.checkString("-lh1-", { offset: 2 }) || this.checkString("-lh2-", { offset: 2 }) || this.checkString("-lh3-", { offset: 2 }) || this.checkString("-lh4-", { offset: 2 }) || this.checkString("-lh5-", { offset: 2 }) || this.checkString("-lh6-", { offset: 2 }) || this.checkString("-lh7-", { offset: 2 }) || this.checkString("-lzs-", { offset: 2 }) || this.checkString("-lz4-", { offset: 2 }) || this.checkString("-lz5-", { offset: 2 }) || this.checkString("-lhd-", { offset: 2 })) {
-      return {
-        ext: "lzh",
-        mime: "application/x-lzh-compressed"
-      };
-    }
-    if (this.check([0, 0, 1, 186])) {
-      if (this.check([33], { offset: 4, mask: [241] })) {
-        return {
-          ext: "mpg",
-          // May also be .ps, .mpeg
-          mime: "video/MP1S"
-        };
-      }
-      if (this.check([68], { offset: 4, mask: [196] })) {
-        return {
-          ext: "mpg",
-          // May also be .mpg, .m2p, .vob or .sub
-          mime: "video/MP2P"
-        };
-      }
-    }
-    if (this.checkString("ITSF")) {
-      return {
-        ext: "chm",
-        mime: "application/vnd.ms-htmlhelp"
-      };
-    }
-    if (this.check([202, 254, 186, 190])) {
-      const machOArchitectureCount = UINT32_BE.get(this.buffer, 4);
-      const javaClassFileMajorVersion = UINT16_BE.get(this.buffer, 6);
-      if (machOArchitectureCount > 0 && machOArchitectureCount <= 30) {
-        return {
-          ext: "macho",
-          mime: "application/x-mach-binary"
-        };
-      }
-      if (javaClassFileMajorVersion > 30) {
-        return {
-          ext: "class",
-          mime: "application/java-vm"
-        };
-      }
-    }
-    if (this.checkString(".RMF")) {
-      return {
-        ext: "rm",
-        mime: "application/vnd.rn-realmedia"
-      };
-    }
-    if (this.checkString("DRACO")) {
-      return {
-        ext: "drc",
-        mime: "application/x-ft-draco"
-      };
-    }
-    if (this.check([253, 55, 122, 88, 90, 0])) {
-      return {
-        ext: "xz",
-        mime: "application/x-xz"
-      };
-    }
-    if (this.checkString("<?xml ")) {
-      return {
-        ext: "xml",
-        mime: "application/xml"
-      };
-    }
-    if (this.check([55, 122, 188, 175, 39, 28])) {
-      return {
-        ext: "7z",
-        mime: "application/x-7z-compressed"
-      };
-    }
-    if (this.check([82, 97, 114, 33, 26, 7]) && (this.buffer[6] === 0 || this.buffer[6] === 1)) {
-      return {
-        ext: "rar",
-        mime: "application/x-rar-compressed"
-      };
-    }
-    if (this.checkString("solid ")) {
-      return {
-        ext: "stl",
-        mime: "model/stl"
-      };
-    }
-    if (this.checkString("AC")) {
-      const version2 = new StringType(4, "latin1").get(this.buffer, 2);
-      if (new RegExp("^\\d+$", "v").test(version2) && version2 >= 1e3 && version2 <= 1050) {
-        return {
-          ext: "dwg",
-          mime: "image/vnd.dwg"
-        };
-      }
-    }
-    if (this.checkString("070707")) {
-      return {
-        ext: "cpio",
-        mime: "application/x-cpio"
-      };
-    }
-    if (this.checkString("BLENDER")) {
-      return {
-        ext: "blend",
-        mime: "application/x-blender"
-      };
-    }
-    if (this.checkString("!<arch>")) {
-      await tokenizer.ignore(8);
-      const string4 = await tokenizer.readToken(new StringType(13, "ascii"));
-      if (string4 === "debian-binary") {
-        return {
-          ext: "deb",
-          mime: "application/x-deb"
-        };
-      }
-      return {
-        ext: "ar",
-        mime: "application/x-unix-archive"
-      };
-    }
-    if (this.checkString("WEBVTT") && // One of LF, CR, tab, space, or end of file must follow "WEBVTT" per the spec (see `fixture/fixture-vtt-*.vtt` for examples). Note that `\0` is technically the null character (there is no such thing as an EOF character). However, checking for `\0` gives us the same result as checking for the end of the stream.
-    ["\n", "\r", "	", " ", "\0"].some((char7) => this.checkString(char7, { offset: 6 }))) {
-      return {
-        ext: "vtt",
-        mime: "text/vtt"
-      };
-    }
-    if (this.check([137, 80, 78, 71, 13, 10, 26, 10])) {
-      return detectPng(tokenizer);
-    }
-    if (this.check([65, 82, 82, 79, 87, 49, 0, 0])) {
-      return {
-        ext: "arrow",
-        mime: "application/vnd.apache.arrow.file"
-      };
-    }
-    if (this.check([103, 108, 84, 70, 2, 0, 0, 0])) {
-      return {
-        ext: "glb",
-        mime: "model/gltf-binary"
-      };
-    }
-    if (this.check([102, 114, 101, 101], { offset: 4 }) || this.check([109, 100, 97, 116], { offset: 4 }) || this.check([109, 111, 111, 118], { offset: 4 }) || this.check([119, 105, 100, 101], { offset: 4 })) {
-      return {
-        ext: "mov",
-        mime: "video/quicktime"
-      };
-    }
-    if (this.check([73, 73, 82, 79, 8, 0, 0, 0, 24])) {
-      return {
-        ext: "orf",
-        mime: "image/x-olympus-orf"
-      };
-    }
-    if (this.checkString("gimp xcf ")) {
-      return {
-        ext: "xcf",
-        mime: "image/x-xcf"
-      };
-    }
-    if (this.checkString("ftyp", { offset: 4 }) && (this.buffer[8] & 96) !== 0) {
-      const brandMajor = new StringType(4, "latin1").get(this.buffer, 8).replace("\0", " ").trim();
-      switch (brandMajor) {
-        case "avif":
-        case "avis":
-          return { ext: "avif", mime: "image/avif" };
-        case "mif1":
-          return { ext: "heic", mime: "image/heif" };
-        case "msf1":
-          return { ext: "heic", mime: "image/heif-sequence" };
-        case "heic":
-        case "heix":
-          return { ext: "heic", mime: "image/heic" };
-        case "hevc":
-        case "hevx":
-          return { ext: "heic", mime: "image/heic-sequence" };
-        case "qt":
-          return { ext: "mov", mime: "video/quicktime" };
-        case "M4V":
-        case "M4VH":
-        case "M4VP":
-          return { ext: "m4v", mime: "video/x-m4v" };
-        case "M4P":
-          return { ext: "m4p", mime: "video/mp4" };
-        case "M4B":
-          return { ext: "m4b", mime: "audio/mp4" };
-        case "M4A":
-          return { ext: "m4a", mime: "audio/x-m4a" };
-        case "F4V":
-          return { ext: "f4v", mime: "video/mp4" };
-        case "F4P":
-          return { ext: "f4p", mime: "video/mp4" };
-        case "F4A":
-          return { ext: "f4a", mime: "audio/mp4" };
-        case "F4B":
-          return { ext: "f4b", mime: "audio/mp4" };
-        case "crx":
-          return { ext: "cr3", mime: "image/x-canon-cr3" };
-        default:
-          if (brandMajor.startsWith("3g")) {
-            if (brandMajor.startsWith("3g2")) {
-              return { ext: "3g2", mime: "video/3gpp2" };
-            }
-            return { ext: "3gp", mime: "video/3gpp" };
-          }
-          return { ext: "mp4", mime: "video/mp4" };
-      }
-    }
-    if (this.checkString("REGEDIT4\r\n")) {
-      return {
-        ext: "reg",
-        mime: "application/x-ms-regedit"
-      };
-    }
-    if (this.check([82, 73, 70, 70])) {
-      if (this.checkString("WEBP", { offset: 8 })) {
-        return {
-          ext: "webp",
-          mime: "image/webp"
-        };
-      }
-      if (this.check([65, 86, 73], { offset: 8 })) {
-        return {
-          ext: "avi",
-          mime: "video/vnd.avi"
-        };
-      }
-      if (this.check([87, 65, 86, 69], { offset: 8 })) {
-        return {
-          ext: "wav",
-          mime: "audio/wav"
-        };
-      }
-      if (this.check([81, 76, 67, 77], { offset: 8 })) {
-        return {
-          ext: "qcp",
-          mime: "audio/qcelp"
-        };
-      }
-    }
-    if (this.check([73, 73, 85, 0, 24, 0, 0, 0, 136, 231, 116, 216])) {
-      return {
-        ext: "rw2",
-        mime: "image/x-panasonic-rw2"
-      };
-    }
-    if (this.check([48, 38, 178, 117, 142, 102, 207, 17, 166, 217])) {
-      return detectAsf(tokenizer);
-    }
-    if (this.check([171, 75, 84, 88, 32, 49, 49, 187, 13, 10, 26, 10])) {
-      return {
-        ext: "ktx",
-        mime: "image/ktx"
-      };
-    }
-    if ((this.check([126, 16, 4]) || this.check([126, 24, 4])) && this.check([48, 77, 73, 69], { offset: 4 })) {
-      return {
-        ext: "mie",
-        mime: "application/x-mie"
-      };
-    }
-    if (this.check([39, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], { offset: 2 })) {
-      return {
-        ext: "shp",
-        mime: "application/x-esri-shape"
-      };
-    }
-    if (this.check([255, 79, 255, 81])) {
-      return {
-        ext: "j2c",
-        mime: "image/j2c"
-      };
-    }
-    if (this.check([0, 0, 0, 12, 106, 80, 32, 32, 13, 10, 135, 10])) {
-      await tokenizer.ignore(20);
-      const type = await tokenizer.readToken(new StringType(4, "ascii"));
-      switch (type) {
-        case "jp2 ":
-          return {
-            ext: "jp2",
-            mime: "image/jp2"
-          };
-        case "jpx ":
-          return {
-            ext: "jpx",
-            mime: "image/jpx"
-          };
-        case "jpm ":
-          return {
-            ext: "jpm",
-            mime: "image/jpm"
-          };
-        case "mjp2":
-          return {
-            ext: "mj2",
-            mime: "image/mj2"
-          };
-        default:
-          return;
-      }
-    }
-    if (this.check([255, 10]) || this.check([0, 0, 0, 12, 74, 88, 76, 32, 13, 10, 135, 10])) {
-      return {
-        ext: "jxl",
-        mime: "image/jxl"
-      };
-    }
-    if (this.check([254, 255])) {
-      if (this.checkString("<?xml ", { offset: 2, encoding: "utf-16be" })) {
-        return {
-          ext: "xml",
-          mime: "application/xml"
-        };
-      }
-      return void 0;
-    }
-    if (this.check([208, 207, 17, 224, 161, 177, 26, 225])) {
-      return {
-        ext: "cfb",
-        mime: "application/x-cfb"
-      };
-    }
-    await tokenizer.peekBuffer(this.buffer, { length: Math.min(256, tokenizer.fileInfo.size), mayBeLess: true });
-    if (this.check([97, 99, 115, 112], { offset: 36 })) {
-      return {
-        ext: "icc",
-        mime: "application/vnd.iccprofile"
-      };
-    }
-    if (this.checkString("**ACE", { offset: 7 }) && this.checkString("**", { offset: 12 })) {
-      return {
-        ext: "ace",
-        mime: "application/x-ace-compressed"
-      };
-    }
-    if (this.checkString("BEGIN:")) {
-      if (this.checkString("VCARD", { offset: 6 })) {
-        return {
-          ext: "vcf",
-          mime: "text/vcard"
-        };
-      }
-      if (this.checkString("VCALENDAR", { offset: 6 })) {
-        return {
-          ext: "ics",
-          mime: "text/calendar"
-        };
-      }
-    }
-    if (this.checkString("FUJIFILMCCD-RAW")) {
-      return {
-        ext: "raf",
-        mime: "image/x-fujifilm-raf"
-      };
-    }
-    if (this.checkString("Extended Module:")) {
-      return {
-        ext: "xm",
-        mime: "audio/x-xm"
-      };
-    }
-    if (this.checkString("Creative Voice File")) {
-      return {
-        ext: "voc",
-        mime: "audio/x-voc"
-      };
-    }
-    if (this.check([4, 0, 0, 0]) && this.buffer.length >= 16) {
-      const jsonSize = new DataView(this.buffer.buffer).getUint32(12, true);
-      if (jsonSize > 12 && this.buffer.length >= jsonSize + 16) {
-        try {
-          const header = new TextDecoder().decode(this.buffer.subarray(16, jsonSize + 16));
-          const json3 = JSON.parse(header);
-          if (json3.files) {
-            return {
-              ext: "asar",
-              mime: "application/x-asar"
-            };
-          }
-        } catch {
-        }
-      }
-    }
-    if (this.check([6, 14, 43, 52, 2, 5, 1, 1, 13, 1, 2, 1, 1, 2])) {
-      return {
-        ext: "mxf",
-        mime: "application/mxf"
-      };
-    }
-    if (this.checkString("SCRM", { offset: 44 })) {
-      return {
-        ext: "s3m",
-        mime: "audio/x-s3m"
-      };
-    }
-    if (this.check([71]) && this.check([71], { offset: 188 })) {
-      return {
-        ext: "mts",
-        mime: "video/mp2t"
-      };
-    }
-    if (this.check([71], { offset: 4 }) && this.check([71], { offset: 196 })) {
-      return {
-        ext: "mts",
-        mime: "video/mp2t"
-      };
-    }
-    if (this.check([66, 79, 79, 75, 77, 79, 66, 73], { offset: 60 })) {
-      return {
-        ext: "mobi",
-        mime: "application/x-mobipocket-ebook"
-      };
-    }
-    if (this.check([68, 73, 67, 77], { offset: 128 })) {
-      return {
-        ext: "dcm",
-        mime: "application/dicom"
-      };
-    }
-    if (this.check([76, 0, 0, 0, 1, 20, 2, 0, 0, 0, 0, 0, 192, 0, 0, 0, 0, 0, 0, 70])) {
-      return {
-        ext: "lnk",
-        mime: "application/x-ms-shortcut"
-        // Informal, used by freedesktop.org shared-mime-info
-      };
-    }
-    if (this.check([98, 111, 111, 107, 0, 0, 0, 0, 109, 97, 114, 107, 0, 0, 0, 0])) {
-      return {
-        ext: "alias",
-        mime: "application/x-ft-apple.alias"
-      };
-    }
-    if (this.checkString("Kaydara FBX Binary  \0")) {
-      return {
-        ext: "fbx",
-        mime: "application/x-ft-fbx"
-      };
-    }
-    if (this.check([76, 80], { offset: 34 }) && (this.check([0, 0, 1], { offset: 8 }) || this.check([1, 0, 2], { offset: 8 }) || this.check([2, 0, 2], { offset: 8 }))) {
-      return {
-        ext: "eot",
-        mime: "application/vnd.ms-fontobject"
-      };
-    }
-    if (this.check([6, 6, 237, 245, 216, 29, 70, 229, 189, 49, 239, 231, 254, 116, 183, 29])) {
-      return {
-        ext: "indd",
-        mime: "application/x-indesign"
-      };
-    }
-    if (this.check([255, 255, 0, 0, 7, 0, 0, 0, 4, 0, 0, 0, 1, 0, 1, 0]) || this.check([0, 0, 255, 255, 0, 0, 0, 7, 0, 0, 0, 4, 0, 1, 0, 1])) {
-      return {
-        ext: "jmp",
-        mime: "application/x-jmp-data"
-      };
-    }
-    await tokenizer.peekBuffer(this.buffer, { length: Math.min(512, tokenizer.fileInfo.size), mayBeLess: true });
-    if (this.checkString("ustar", { offset: 257 }) && (this.checkString("\0", { offset: 262 }) || this.checkString(" ", { offset: 262 })) || this.check([0, 0, 0, 0, 0, 0], { offset: 257 }) && tarHeaderChecksumMatches(this.buffer)) {
-      return {
-        ext: "tar",
-        mime: "application/x-tar"
-      };
-    }
-    if (this.check([255, 254])) {
-      const encoding = "utf-16le";
-      if (this.checkString("<?xml ", { offset: 2, encoding })) {
-        return {
-          ext: "xml",
-          mime: "application/xml"
-        };
-      }
-      if (this.check([255, 14], { offset: 2 }) && this.checkString("SketchUp Model", { offset: 4, encoding })) {
-        return {
-          ext: "skp",
-          mime: "application/vnd.sketchup.skp"
-        };
-      }
-      if (this.checkString("Windows Registry Editor Version 5.00\r\n", { offset: 2, encoding })) {
-        return {
-          ext: "reg",
-          mime: "application/x-ms-regedit"
-        };
-      }
-      return void 0;
-    }
-    if (this.checkString("-----BEGIN PGP MESSAGE-----")) {
-      return {
-        ext: "pgp",
-        mime: "application/pgp-encrypted"
-      };
-    }
-    const isoStandardIdentifierOffset = 32769;
-    const isoStandardIdentifierLength = 5;
-    if (tokenizer.supportsRandomAccess() && tokenizer.fileInfo.size >= isoStandardIdentifierOffset + isoStandardIdentifierLength) {
-      const isoStandardIdentifier = new Uint8Array(isoStandardIdentifierLength);
-      await tokenizer.peekBuffer(isoStandardIdentifier, {
-        position: isoStandardIdentifierOffset,
-        length: isoStandardIdentifierLength,
-        mayBeLess: true
-      });
-      if (checkBytes(isoStandardIdentifier, stringToBytes("CD001"))) {
-        return {
-          ext: "iso",
-          mime: "application/x-iso9660-image"
-        };
-      }
-    }
-  };
-  // Detections with limited supporting data, resulting in a higher likelihood of false positives
-  detectImprecise = async (tokenizer) => {
-    this.buffer = new Uint8Array(reasonableDetectionSizeInBytes);
-    const fileSize = getKnownFileSizeOrMaximum(tokenizer.fileInfo.size);
-    await tokenizer.peekBuffer(this.buffer, { length: Math.min(8, fileSize), mayBeLess: true });
-    if (this.check([0, 0, 1, 186]) || this.check([0, 0, 1, 179])) {
-      return {
-        ext: "mpg",
-        mime: "video/mpeg"
-      };
-    }
-    if (this.check([0, 1, 0, 0, 0])) {
-      return {
-        ext: "ttf",
-        mime: "font/ttf"
-      };
-    }
-    if (this.check([0, 0, 1, 0])) {
-      return {
-        ext: "ico",
-        mime: "image/x-icon"
-      };
-    }
-    if (this.check([0, 0, 2, 0])) {
-      return {
-        ext: "cur",
-        mime: "image/x-icon"
-      };
-    }
-    await tokenizer.peekBuffer(this.buffer, { length: Math.min(4 + this.options.mpegOffsetTolerance, fileSize), mayBeLess: true });
-    if (this.buffer.length >= 4 + this.options.mpegOffsetTolerance) {
-      for (let depth = 0; depth <= this.options.mpegOffsetTolerance; ++depth) {
-        const type = this.scanMpeg(depth);
-        if (type) {
-          return type;
-        }
-      }
-    }
-  };
-  async readTiffTag(bigEndian) {
-    const tagId = await this.tokenizer.readToken(bigEndian ? UINT16_BE : UINT16_LE);
-    await this.tokenizer.ignore(10);
-    switch (tagId) {
-      case 50341:
-        return {
-          ext: "arw",
-          mime: "image/x-sony-arw"
-        };
-      case 50706:
-        return {
-          ext: "dng",
-          mime: "image/x-adobe-dng"
-        };
-      default:
-    }
-  }
-  async readTiffIFD(bigEndian) {
-    const numberOfTags = await this.tokenizer.readToken(bigEndian ? UINT16_BE : UINT16_LE);
-    if (numberOfTags > maximumTiffTagCount) {
-      return;
-    }
-    if (hasUnknownFileSize(this.tokenizer) && 2 + numberOfTags * 12 > maximumTiffIfdOffsetInBytes) {
-      return;
-    }
-    for (let n = 0; n < numberOfTags; ++n) {
-      const fileType = await this.readTiffTag(bigEndian);
-      if (fileType) {
-        return fileType;
-      }
-    }
-  }
-  async readTiffHeader(bigEndian) {
-    const tiffFileType = {
-      ext: "tif",
-      mime: "image/tiff"
-    };
-    const version2 = (bigEndian ? UINT16_BE : UINT16_LE).get(this.buffer, 2);
-    const ifdOffset = (bigEndian ? UINT32_BE : UINT32_LE).get(this.buffer, 4);
-    if (version2 === 42) {
-      if (ifdOffset >= 6) {
-        if (this.checkString("CR", { offset: 8 })) {
-          return {
-            ext: "cr2",
-            mime: "image/x-canon-cr2"
-          };
-        }
-        if (ifdOffset >= 8) {
-          const someId1 = (bigEndian ? UINT16_BE : UINT16_LE).get(this.buffer, 8);
-          const someId2 = (bigEndian ? UINT16_BE : UINT16_LE).get(this.buffer, 10);
-          if (someId1 === 28 && someId2 === 254 || someId1 === 31 && someId2 === 11) {
-            return {
-              ext: "nef",
-              mime: "image/x-nikon-nef"
-            };
-          }
-        }
-      }
-      if (hasUnknownFileSize(this.tokenizer) && ifdOffset > maximumTiffStreamIfdOffsetInBytes) {
-        return tiffFileType;
-      }
-      const maximumTiffOffset = hasUnknownFileSize(this.tokenizer) ? maximumTiffIfdOffsetInBytes : this.tokenizer.fileInfo.size;
-      try {
-        await safeIgnore(this.tokenizer, ifdOffset, {
-          maximumLength: maximumTiffOffset,
-          reason: "TIFF IFD offset"
-        });
-      } catch (error62) {
-        if (error62 instanceof EndOfStreamError) {
-          return;
-        }
-        throw error62;
-      }
-      let fileType;
-      try {
-        fileType = await this.readTiffIFD(bigEndian);
-      } catch (error62) {
-        if (error62 instanceof EndOfStreamError) {
-          return;
-        }
-        throw error62;
-      }
-      return fileType ?? tiffFileType;
-    }
-    if (version2 === 43) {
-      return tiffFileType;
-    }
-  }
-  /**
-  	Scan check MPEG 1 or 2 Layer 3 header, or 'layer 0' for ADTS (MPEG sync-word 0xFFE).
-  
-  	@param offset - Offset to scan for sync-preamble.
-  	@returns {{ext: string, mime: string}}
-  	*/
-  scanMpeg(offset) {
-    if (this.check([255, 224], { offset, mask: [255, 224] })) {
-      if (this.check([16], { offset: offset + 1, mask: [22] })) {
-        return {
-          ext: "aac",
-          mime: "audio/aac"
-        };
-      }
-      if (this.check([255, 254], { offset })) {
-        return;
-      }
-      if (this.check([8], { offset: offset + 1, mask: [24] })) {
-        return;
-      }
-      if (this.check([240], { offset: offset + 2, mask: [240] })) {
-        return;
-      }
-      if (this.check([12], { offset: offset + 2, mask: [12] })) {
-        return;
-      }
-      if (this.check([2], { offset: offset + 1, mask: [6] })) {
-        return {
-          ext: "mp3",
-          mime: "audio/mpeg"
-        };
-      }
-      if (this.check([4], { offset: offset + 1, mask: [6] })) {
-        return {
-          ext: "mp2",
-          mime: "audio/mpeg"
-        };
-      }
-      if (this.check([6], { offset: offset + 1, mask: [6] })) {
-        return {
-          ext: "mp1",
-          mime: "audio/mpeg"
-        };
-      }
-    }
-  }
-};
-var supportedExtensions = new Set(extensions);
-var supportedMimeTypes = new Set(mimeTypes);
-async function fileTypeFromFile(path, options) {
-  return new FileTypeParser(options).fromFile(path);
-}
-
-// apps/api/src/modules/documents/document.storage.ts
 var isVercel = !!process.env.VERCEL;
 var projectRoot = isVercel ? "/var/task" : fileURLToPath(new URL("../../../../../", import.meta.url));
 var webRoot = resolve(projectRoot, "apps/web");
@@ -158457,18 +154511,18 @@ var DocumentStorage = class {
       if (file2.size > salarySlipMaxBytes) throw new import_multer.default.MulterError("LIMIT_FILE_SIZE");
       let detected;
       try {
-        detected = await fileTypeFromFile(this.path(temporaryKey));
+        detected = await detectMimeType(this.path(temporaryKey));
       } catch (error62) {
-        console.error("[DocumentStorage.receive] fileTypeFromFile failed:", error62);
+        console.error("[DocumentStorage.receive] detectMimeType failed:", error62);
         if (error62 instanceof Error && "code" in error62) throw documentUnavailable();
         throw unsupported();
       }
       console.log("[DocumentStorage.receive] detected type:", detected);
       const mimeType = detected?.mime;
-      const extensions2 = mimeType && salarySlipExtensions[mimeType];
+      const extensions = mimeType && salarySlipExtensions[mimeType];
       const extension = posix.extname(win32.basename(file2.originalname)).toLowerCase();
-      if (!mimeType || !extensions2 || file2.mimetype !== mimeType || !extensions2.includes(extension)) throw unsupported();
-      const key = `${randomUUID()}${extensions2[0]}`;
+      if (!mimeType || !extensions || file2.mimetype !== mimeType || !extensions.includes(extension)) throw unsupported();
+      const key = `${randomUUID()}${extensions[0]}`;
       try {
         await rename(this.path(temporaryKey), this.path(key));
       } catch (error62) {
@@ -160064,7 +156118,4 @@ media-typer/index.js:
    * Copyright(c) 2014 Douglas Christopher Wilson
    * MIT Licensed
    *)
-
-ieee754/index.js:
-  (*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> *)
 */

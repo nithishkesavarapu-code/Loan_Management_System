@@ -1,12 +1,29 @@
 import { randomUUID } from 'node:crypto';
-import { lstat, mkdir, open, realpath, rename, unlink } from 'node:fs/promises';
+import { lstat, mkdir, open, readFile, realpath, rename, unlink } from 'node:fs/promises';
 import { isAbsolute, relative, resolve, sep, win32, posix } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import multer from 'multer';
 import type { Request, Response } from 'express';
-import { fileTypeFromFile } from 'file-type';
 import { salarySlipExtensions, salarySlipMaxBytes, type DocumentDTO } from '@lms/shared';
 import { HttpError } from '../../middleware/errors.js';
+
+/** Detect PDF/JPEG/PNG from file magic bytes — no external dependencies. */
+async function detectMimeType(filePath: string): Promise<{ mime: string } | undefined> {
+  const buf = Buffer.alloc(8);
+  const handle = await open(filePath, 'r');
+  try {
+    await handle.read(buf, 0, 8, 0);
+  } finally {
+    await handle.close();
+  }
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47) return { mime: 'image/png' };
+  // JPEG: FF D8 FF
+  if (buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF) return { mime: 'image/jpeg' };
+  // PDF: 25 50 44 46 (%PDF)
+  if (buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46) return { mime: 'application/pdf' };
+  return undefined;
+}
 
 const isVercel = !!process.env.VERCEL;
 const projectRoot = isVercel ? '/var/task' : fileURLToPath(new URL('../../../../../', import.meta.url));
@@ -72,9 +89,9 @@ export class DocumentStorage {
       if (!file || file.size === 0) throw invalidUpload();
       if (file.size > salarySlipMaxBytes) throw new multer.MulterError('LIMIT_FILE_SIZE');
       let detected;
-      try { detected = await fileTypeFromFile(this.path(temporaryKey)); }
+      try { detected = await detectMimeType(this.path(temporaryKey)); }
       catch (error) {
-        console.error('[DocumentStorage.receive] fileTypeFromFile failed:', error);
+        console.error('[DocumentStorage.receive] detectMimeType failed:', error);
         if (error instanceof Error && 'code' in error) throw documentUnavailable();
         throw unsupported();
       }
