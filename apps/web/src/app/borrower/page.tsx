@@ -7,7 +7,9 @@ import { LoanList } from '@/features/loans/loan-list';
 
 export default async function BorrowerPage() {
   const user = await requireRoles(['BORROWER']);
-  const applications = await serverApi(applicationPageSchema, '/borrower/applications');
-  const loans = await serverApi(loanPageSchema, '/borrower/loans');
+  const [applications, loans] = await Promise.all([
+    serverApi(applicationPageSchema, '/borrower/applications'),
+    serverApi(loanPageSchema, '/borrower/loans'),
+  ]);
   return <WorkspaceShell user={user} active="/borrower"><h1 className="text-2xl font-semibold">Borrower portal</h1><ApplicationList initial={applications} /><LoanList initial={loans} /><AccountDetails user={user} /></WorkspaceShell>;
 }

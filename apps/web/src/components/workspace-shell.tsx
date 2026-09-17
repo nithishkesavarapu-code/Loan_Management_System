@@ -16,7 +16,7 @@ export function WorkspaceShell({ user, active, children }: { user: UserDTO; acti
     <header className="border-b border-zinc-200">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-5 px-5 py-5 sm:px-8"><Brand /><SessionControls user={user} /></div>
       <nav aria-label="Workspace" className="mx-auto flex max-w-6xl flex-wrap gap-x-5 gap-y-1 px-5 sm:px-8">
-        {links.map(({ href, label, Icon }) => <Link key={href} href={href} prefetch={false} aria-current={active === href ? 'page' : undefined}
+        {links.map(({ href, label, Icon }) => <Link key={href} href={href} aria-current={active === href ? 'page' : undefined}
           className={`flex min-h-12 items-center gap-2 border-b-2 py-3 text-sm font-medium ${active === href ? 'border-teal-700 text-teal-800' : 'border-transparent text-zinc-600 hover:text-zinc-950'}`}>
           <Icon className="size-4 shrink-0" aria-hidden="true" />{label}
         </Link>)}

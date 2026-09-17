@@ -19,7 +19,8 @@ function getApp() {
 async function initialize() {
   getApp();
   if (!ready && env) {
-    ready = connectDatabase(env).then(() => ensureIndexes());
+    ready = connectDatabase(env);
+    void ensureIndexes().catch((err) => console.error('[serverless] Background ensureIndexes error:', err));
   }
   try {
     await ready;

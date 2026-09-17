@@ -155070,7 +155070,8 @@ function getApp() {
 async function initialize() {
   getApp();
   if (!ready && env2) {
-    ready = connectDatabase(env2).then(() => ensureIndexes());
+    ready = connectDatabase(env2);
+    void ensureIndexes().catch((err) => console.error("[serverless] Background ensureIndexes error:", err));
   }
   try {
     await ready;
